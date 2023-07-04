@@ -1,0 +1,123 @@
+PHILIP SOLOMON.V
+
++91-98409-64209 | Philip.says@gmail.com | www.github.com/PhilipDocs | www.linkedin.com/in/philip-solomon-1204b717/
+
+Professional Summary
+Accomplished professional with 16 plus years of experience in end-to-end data science and AI engagements,
+business strategy, and building high-performing teams. Experienced in building transformational machine learning
+initiatives in multiple domains including Healthcare,Finance and Accounting, Retail and education domain. Led
+R&amp;D teams in development of novel, futuristic applications in the areas of computer vision, machine learning, and
+natural language processing. Experienced in business development and relationship management of Fortune
+Global clients.
+Skills
+
+Data-Driven Physician Loyalty Optimization in Healthcare
+Career Contour
+Feb ‘17 – Till date Organization : Cognizant Technology Solutions Pvt Ltd.
+Designation : Senior Manager
+ Lead the data science practice and manage a team of data scientists engaged in ideating, creating,
+researching, leveraging state-of-the-art machine learning algorithms;
+ Identify company-wise opportunities and recommend technology strategy for various business initiatives;
+ Conduct research on business-critical topics;
+ Collaborate tightly with product team to improve customer experience and expand product offerings;
+ Oversee monitoring and improvement of live production data science models;
+ Work closely with sales team in identifying new opportunities for growth and develop go-to-market
+strategies;
+Jan ‘12 – Jan ‘17 Organization : Customer Analytics India Private Limited (Formerly
+
+–Thirdwave Software Solutions)
+Designation : Lead Analyst
+ Lead the data science team engaged in research, data mining, machine learning, predictive modelling, and
+other quantitative analyses;
+ Handle end-to-end delivery of Data Science/Machine Learning projects;
+ Mentor, guide and review architecture, data science approach and methodologies and helps the team make
+better informed decisions on the design and implementation;
+ Engage in collaborative research with partner and client organizations;
+ Partner with sales team to develop new business with existing and new clients;
+ Mentor and guide Data Scientists at various levels;
+Jun ‘10 – Jan ‘12 Organization : Mindtree India Private Limited
+Designation : Senior Analyst
+ Analyse large data sets, apply machine learning techniques and develop predictive models for optimization
+and new strategy development;
+ Develop and enhance statistical models by leveraging best-in-class modelling techniques;
+ Decipher client problems from varied verticals into actionable analysis and develop data driven solutions for
+business problems;
+ Data Science, Machine Learning, AI
+ Deep Learning, Neural Networks
+ Computer Vision, NLP
+ Reinforcement Learning
+
+ Leading AI and Machine Learning Initiatives
+ AI and Data Strategy
+ Client Relationship Management, Business
+Development
+ Leadership and People Development
+
+Prior Experience
+ Software Engineer, Verizon Data Services – Nov 2006 to June 2008
+ Programmer, Cognizant India Private Limited – Aug 2005 to Oct 2006
+Significant Projects
+Auto Routing of Helpdesk Tickets
+Description : This project aimed to improve the ticket routing process by automating the categorization
+and routing of support tickets based on their subject and description. It involved extracting data from
+Service Now for closed tickets over an 18-month period. The project utilized the Random Forest algorithm
+to analyze email information and mine the subject and description of the tickets to understand the
+context of the calls. Based on this analysis and after performing data joins within master tables, the
+algorithm accurately diverted the tickets to corresponding vendors. Only the segments of tickets with a
+95% accuracy rate or higher were automatically routed, resulting in a 10% reduction in effort. Tickets
+that did not meet the accuracy threshold were sent for manual review. This automated ticket routing
+system streamlined the support ticket management process, optimizing efficiency and ensuring proper
+ticket handling.
+
+Customer : Largest Car Manufacturer in Europe
+Tools used : Python,Natural Language Processing
+Architecture : Artificial Neural Nets
+Data-Driven Physician Loyalty Optimization in Healthcare
+Description : This project involved defining the data requirements both externally and internally. The
+focus was on understanding the HCUP database data and the internal database of inpatient records. A
+key component was the scoring of physicians based on the percentage split across different service lines.
+To predict physician loyalty based on past demand, predictive models such as Support Vector Machines
+(SVM) and Random Forest (RF) algorithms were built. These models utilized the available data to make
+accurate predictions. Overall, the project aimed to leverage data analysis and predictive modeling
+techniques to gain insights into physician loyalty and optimize decision-making in healthcare operations.
+
+Customer : Advanced Healthcare technology solutions Provider
+Tools used : Python
+Architecture : Machine Learning
+
+Tool Proficiency
+Machine Learning Regression, Classification, K-Nearest Neighbors, Bayesian Methods, Support Vector Machines,
+Decision Trees, Random Forest, Gradient Boosting Machine, K-Means Clustering, Hierarchical
+Clustering, Neural Networks, Deep Learning, NLP, Computer Vision, Reinforcement Learning,
+CNN, RNN, LSTM, Recommender Systems
+
+Statistical Methods Hypothesis Testing &amp; Confidence Intervals, Dimensionality Reduction, Principal Component
+
+Analysis, AB Testing
+
+Programming
+Languages
+
+Python, PySpark, R, SQL,HTML,CSS
+
+Business Domains HealthCare,Finance and Accounting,Retail,Education
+Data Visualization ggplot(R), matplotlib(python), seaborn
+Other Techniques Image Analysis, Text Mining, Natural Language Processing, Language Modeling, Time Series
+Analysis, Recommender Systems, Anomaly Detection, Segmentation, Sentiment Analysis
+
+Cloud Computing AWS, GCP
+ML Packages scikit-learn, pandas, scipy, NLTK
+Deep Learning
+Packages
+
+PyTorch, TensorFlow, Keras
+
+Academia
+
+2010 MBA (Finance/Systems) from Bharathidasan Institute of Management (BIM), Trichy
+2005 B.Sc. (Mathematics) from University of Madras
+1999 HSC (Maths, Physics, Chemistry, Computer Science), State Board, Tamilnadu
+1997 SSLC, State Board, Tamilnadu
+PERSONAL DOSSIER
+Date of Birth : 27th April 1985
+Email : Philip.cts@gmail.com
