@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Dashboard</h1>
+        <form method="post" action="/dashboard">
+            <label for="ticket_no">Ticket No:</label>
+            <input type="text" id="ticket_no" name="ticket_no" required><br><br>
+
+            <label for="claim_number">Claim Number:</label>
+            <input type="text" id="claim_number" name="claim_number" required><br><br>
+
+            <label for="date_of_call">Date of Call:</label>
+            <input type="date" id="date_of_call" name="date_of_call" required><br><br>
+
+            <label for="description">Description of Call:</label>
+            <textarea id="description" name="description" required></textarea><br><br>
+
+            <label for="call_category">Call Category:</label>
+            <select id="call_category" name="call_category">
+                {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select><br><br>
+
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    <script>
+        document.getElementById("description").addEventListener("change", function() {
+            fetch("/get_category", {
+                method: "POST",
+                body: JSON.stringify({ description: this.value }),
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                }
+            })
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById("call_category").value = data;
+            });
+        });
+    </script>
+</body>
+</html>
