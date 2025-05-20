@@ -1,0 +1,14962 @@
+#!/usr/bin/env python
+
+# coding: utf-8
+
+ 
+
+# In[1]:
+
+ 
+
+ 
+
+get_ipython().run_line_magic('reset', '')
+
+import os
+
+import pandas as pd
+
+ 
+
+ 
+
+# In[2]:
+
+ 
+
+ 
+
+auc_test=0
+
+import smtplib
+
+ 
+
+import datetime
+
+ 
+
+from email.mime.multipart import MIMEMultipart
+
+ 
+
+from email.mime.text import MIMEText
+
+ 
+
+class MailProps:
+
+ 
+
+    """Holds email server (SMTP) configuration."""
+
+ 
+
+    def __init__(self, host: str, port: int, from_user: str):
+
+ 
+
+        self.host = host
+
+ 
+
+        self.port = port
+
+ 
+
+        self.from_user = from_user
+
+ 
+
+class RecipientVO:
+
+ 
+
+    """Holds recipient addresses for email."""
+
+ 
+
+    def __init__(self, recipients_to: list, recipients_cc: list = None):
+
+ 
+
+        self.recipients_to = recipients_to
+
+ 
+
+        self.recipients_cc = recipients_cc or []
+
+ 
+
+class EmailService:
+
+ 
+
+    """Responsible for sending emails using SMTP."""
+
+ 
+
+    def __init__(self, mail_props: MailProps):
+
+ 
+
+        self.mail_props = mail_props
+
+ 
+
+ 
+
+ 
+
+    def send_email(self, subject: str, mail_body_content: str, recipient: RecipientVO):
+
+ 
+
+        try:
+
+ 
+
+            session = smtplib.SMTP(self.mail_props.host, self.mail_props.port)
+
+ 
+
+            message = MIMEMultipart()
+
+ 
+
+            message['From'] = self.mail_props.from_user
+
+ 
+
+            message['To'] = ', '.join(recipient.recipients_to)
+
+ 
+
+            if recipient.recipients_cc:
+
+ 
+
+                message['Cc'] = ', '.join(recipient.recipients_cc)
+
+ 
+
+            message['Subject'] = subject
+
+ 
+
+ 
+
+ 
+
+            message.attach(MIMEText(mail_body_content, 'plain'))
+
+ 
+
+            all_recipients = list(set(recipient.recipients_to + recipient.recipients_cc))
+
+ 
+
+            session.sendmail(self.mail_props.from_user, all_recipients, message.as_string())
+
+ 
+
+            session.quit()
+
+ 
+
+            print("Mail sent successfully!")
+
+ 
+
+        except Exception as e:
+
+ 
+
+            print(f"Error while sending email: {e}")
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+def send_smart_audit_report():
+
+ 
+
+    now = datetime.datetime.now()
+
+ 
+
+    current_date = now.strftime("%Y-%m-%d")
+
+ 
+
+ 
+
+ 
+
+    to_addresses = [
+
+ 
+
+        Philip.Vincent@cognizant.com
+
+ 
+
+    ]
+
+ 
+
+    cc_addresses = [
+
+ 
+
+        Philip.Vincent@cognizant.com
+
+ 
+
+    ]
+
+ 
+
+ 
+
+ 
+
+    subject = f"FW: Smart Audit Model Execution Report for {current_date} (HIL, MMAI, MAPD)"
+
+ 
+
+    body = f"The AUCfor test is :{auc_test}"
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+    mail_props = MailProps(
+
+ 
+
+        host="smtprelay.tmghealth.com",
+
+ 
+
+        port=25,
+
+ 
+
+        from_user=tmganalytics01@cognizant.com
+
+ 
+
+    )
+
+ 
+
+    recipient = RecipientVO(to_addresses, cc_addresses)
+
+ 
+
+    email_service = EmailService(mail_props)
+
+ 
+
+    email_service.send_email(subject, body, recipient)
+
+ 
+
+ 
+
+ 
+
+ 
+
+send_smart_audit_report()
+
+ 
+
+ 
+
+# In[3]:
+
+ 
+
+ 
+
+folder_path = '\\\\isixnodew1.tmghealth.com\\Departments\\Claims\\TMG Smart Audit\\JHH\\Prepay\\Excel\\Excel\\'  # Replace this with your actual folder path
+
+# List to collect DataFrames
+
+all_data = []
+
+# Loop through each file in the folder
+
+for file in os.listdir(folder_path):
+
+ 
+
+    if file.endswith('.xlsx'):
+
+ 
+
+        file_path = os.path.join(folder_path, file)
+
+ 
+
+        try:
+
+ 
+
+            # Read the specific sheet
+
+ 
+
+            df = pd.read_excel(file_path, sheet_name='Prepay Data')
+
+ 
+
+            df['Source_File'] = file  # Optional: track the origin of the data
+
+ 
+
+            all_data.append(df)
+
+ 
+
+        except Exception as e:
+
+ 
+
+            print(f"Skipping {file}: {e}")
+
+ 
+
+ 
+
+ 
+
+# Combine all DataFrames
+
+ 
+
+combined_df = pd.concat(all_data, ignore_index=True)
+
+ 
+
+ 
+
+ 
+
+# Display basic info
+
+ 
+
+print(f"Combined {len(all_data)} files into one DataFrame with {combined_df.shape[0]} rows and {combined_df.shape[1]} columns.")
+
+ 
+
+ 
+
+ 
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+ 
+
+# In[4]:
+
+ 
+
+ 
+
+combined_df['Error_Type'].unique()
+
+ 
+
+ 
+
+# In[5]:
+
+ 
+
+ 
+
+combined_df['Is_Error'] = ~combined_df['Error_Type'].isin(['No Error', 'No Error '])
+
+ 
+
+ 
+
+# In[6]:
+
+ 
+
+ 
+
+combined_df_prepay=combined_df.copy()
+
+ 
+
+ 
+
+# In[7]:
+
+ 
+
+ 
+
+#Loading HD DC Dataset
+
+import os
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+import os
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# Define your folder path containing the .xlsx files
+
+ 
+
+folder_path = '\\\\isixnodew1.tmghealth.com\\Departments\\Claims\\TMG Smart Audit\\JHH\\Prepay\\Excel\\Excel_HCDC\\'  # Replace this with your actual folder path
+
+ 
+
+ 
+
+ 
+
+# List to collect DataFrames
+
+ 
+
+all_data = []
+
+ 
+
+ 
+
+ 
+
+# Loop through each file in the folder
+
+ 
+
+for file in os.listdir(folder_path):
+
+ 
+
+    if file.endswith('.xlsx'):
+
+ 
+
+        file_path = os.path.join(folder_path, file)
+
+ 
+
+        try:
+
+ 
+
+            # Read the specific sheet
+
+ 
+
+            df = pd.read_excel(file_path, sheet_name='HC DC Data')
+
+ 
+
+            df['Source_File'] = file  # Optional: track the origin of the data
+
+ 
+
+            all_data.append(df)
+
+ 
+
+        except Exception as e:
+
+ 
+
+            print(f"Skipping {file}: {e}")
+
+ 
+
+ 
+
+ 
+
+# Combine all DataFrames
+
+ 
+
+combined_df = pd.concat(all_data, ignore_index=True)
+
+ 
+
+ 
+
+ 
+
+# Display basic info
+
+ 
+
+print(f"Combined {len(all_data)} files into one DataFrame with {combined_df.shape[0]} rows and {combined_df.shape[1]} columns.")
+
+ 
+
+ 
+
+# In[8]:
+
+ 
+
+ 
+
+combined_df.columns
+
+ 
+
+ 
+
+# In[9]:
+
+ 
+
+ 
+
+combined_df['Is_Error'] = ~combined_df['Error type'].isin(['No Error', 'No Error '])
+
+ 
+
+ 
+
+# In[10]:
+
+ 
+
+ 
+
+combined_df.head(1)
+
+ 
+
+ 
+
+# In[11]:
+
+ 
+
+ 
+
+combined_df_hcdc=combined_df.copy()
+
+ 
+
+ 
+
+# In[12]:
+
+ 
+
+ 
+
+import os
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+folder_path = '\\\\isixnodew1.tmghealth.com\\Departments\\Claims\\TMG Smart Audit\\JHH\\Postpay\\final\\'
+
+ 
+
+sheet_name = 'Operational Detail Findings'
+
+ 
+
+all_dfs = []
+
+ 
+
+ 
+
+ 
+
+# Loop through all .xls and .xlsx files
+
+ 
+
+for file in os.listdir(folder_path):
+
+ 
+
+    if file.endswith(('.xls', '.xlsx')):
+
+ 
+
+        file_path = os.path.join(folder_path, file)
+
+ 
+
+ 
+
+ 
+
+        try:
+
+ 
+
+            # Try reading the Excel file
+
+ 
+
+            df = pd.read_excel(file_path, sheet_name=sheet_name)
+
+ 
+
+            df['Source_File'] = file
+
+ 
+
+            all_dfs.append(df)
+
+ 
+
+ 
+
+ 
+
+        except ValueError as ve:
+
+ 
+
+            print(f"Skipping {file}: Worksheet named '{sheet_name}' not found")
+
+ 
+
+        except Exception as e:
+
+ 
+
+            print(f"Error - Skipping {file}: {e}")
+
+ 
+
+ 
+
+ 
+
+# Combine if data is found
+
+ 
+
+if all_dfs:
+
+ 
+
+    combined_df = pd.concat(all_dfs, ignore_index=True)
+
+ 
+
+ 
+
+ 
+
+    # Add Is_Error column
+
+ 
+
+    if 'Error' in combined_df.columns:
+
+ 
+
+        combined_df['Is_Error'] = combined_df['Error'].apply(
+
+ 
+
+            lambda x: "No" if pd.isna(x) or str(x).strip() == '' else "Yes"
+
+ 
+
+        )
+
+ 
+
+    else:
+
+ 
+
+        print("Warning: 'Error' column not found. Skipping Is_Error column.")
+
+ 
+
+ 
+
+ 
+
+    # Save combined output
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+    print(f"Combined {len(all_dfs)} files into one DataFrame with {combined_df.shape[0]} rows and {combined_df.shape[1]} columns.")
+
+ 
+
+else:
+
+ 
+
+    print("No valid files with the required sheet were found.")
+
+ 
+
+ 
+
+# In[13]:
+
+ 
+
+ 
+
+combined_df.columns
+
+ 
+
+ 
+
+# In[14]:
+
+ 
+
+ 
+
+combined_df['Paid Date'] = pd.to_datetime(combined_df['Paid Date'], errors='coerce')
+
+ 
+
+ 
+
+ 
+
+# Create audit_date as the last day of the same month
+
+ 
+
+combined_df['audit_date'] = combined_df['Paid Date'].dt.to_period('M').dt.to_timestamp(how='end')
+
+ 
+
+ 
+
+# In[15]:
+
+ 
+
+ 
+
+combine_df_postpay=combined_df.copy()
+
+ 
+
+ 
+
+# In[16]:
+
+ 
+
+ 
+
+combined_df_hcdc.shape,combine_df_postpay.shape,combined_df_prepay.shape
+
+ 
+
+ 
+
+# In[17]:
+
+ 
+
+ 
+
+combined_df_hcdc.columns
+
+ 
+
+ 
+
+# In[18]:
+
+ 
+
+ 
+
+combined_df_hcdc1=combined_df_hcdc[["Claim ID","Audit Date","Is_Error"]]
+
+ 
+
+ 
+
+# In[19]:
+
+ 
+
+ 
+
+combined_df_hcdc1.head(2)
+
+ 
+
+ 
+
+# In[20]:
+
+ 
+
+ 
+
+# Step 1: Create a new DataFrame with renamed and selected columns
+
+ 
+
+transformed_df = combined_df_hcdc1.rename(columns={
+
+ 
+
+    'Claim ID': 'CLAIM_ID',
+
+ 
+
+    'Audit Date': 'QC_Date'
+
+ 
+
+})[['CLAIM_ID', 'Is_Error', 'QC_Date']]
+
+ 
+
+ 
+
+ 
+
+# Step 2: Create Error_Type and Error_Cat columns
+
+ 
+
+transformed_df['Error_Type'] = transformed_df['Is_Error']
+
+ 
+
+transformed_df['Error_Cat'] = transformed_df['Is_Error'].apply(lambda x: 1 if str(x).strip().lower() == 'yes' else 0)
+
+# Step 3: Drop Is_Error
+
+ 
+
+transformed_df.drop(columns=['Is_Error'], inplace=True)
+
+ 
+
+ 
+
+ 
+
+# Step 4: Reorder columns
+
+ 
+
+transformed_df = transformed_df[['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat']]
+
+ 
+
+ 
+
+ 
+
+# Step 5: Sort the DataFrame
+
+ 
+
+transformed_df.sort_values(by=['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat'], inplace=True)
+
+ 
+
+ 
+
+# In[21]:
+
+ 
+
+ 
+
+transformed_df['QC_Date'] = pd.to_datetime(transformed_df['QC_Date']).dt.date
+
+ 
+
+ 
+
+# In[22]:
+
+ 
+
+ 
+
+combined_df_hcdc2=transformed_df.copy()
+
+ 
+
+ 
+
+# In[23]:
+
+ 
+
+ 
+
+combine_df_postpay.head(1)
+
+ 
+
+ 
+
+# In[24]:
+
+ 
+
+ 
+
+combine_df_postpay1=combine_df_postpay[["Claim ID","audit_date","Is_Error"]]
+
+ 
+
+ 
+
+# In[25]:
+
+ 
+
+ 
+
+# Step 1: Create a new DataFrame with renamed and selected columns
+
+ 
+
+transformed_df = combine_df_postpay1.rename(columns={
+
+ 
+
+    'Claim ID': 'CLAIM_ID',
+
+ 
+
+    'audit_date': 'QC_Date'
+
+ 
+
+})[['CLAIM_ID', 'Is_Error', 'QC_Date']]
+
+ 
+
+ 
+
+ 
+
+# Step 2: Create Error_Type and Error_Cat columns
+
+ 
+
+transformed_df['Error_Type'] = transformed_df['Is_Error']
+
+ 
+
+transformed_df['Error_Cat'] = transformed_df['Is_Error'].apply(lambda x: 1 if str(x).strip().lower() == 'yes' else 0)
+
+# Step 3: Drop Is_Error
+
+ 
+
+transformed_df.drop(columns=['Is_Error'], inplace=True)
+
+ 
+
+ 
+
+ 
+
+# Step 4: Reorder columns
+
+ 
+
+transformed_df = transformed_df[['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat']]
+
+ 
+
+ 
+
+ 
+
+# Step 5: Sort the DataFrame
+
+ 
+
+transformed_df.sort_values(by=['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat'], inplace=True)
+
+ 
+
+ 
+
+# In[26]:
+
+ 
+
+ 
+
+transformed_df['QC_Date'] = pd.to_datetime(transformed_df['QC_Date']).dt.date
+
+ 
+
+ 
+
+# In[27]:
+
+ 
+
+ 
+
+combine_df_postpay2=transformed_df.copy()
+
+ 
+
+ 
+
+# In[28]:
+
+ 
+
+ 
+
+combine_df_postpay2.head(1)
+
+ 
+
+ 
+
+# In[29]:
+
+ 
+
+ 
+
+combined_df_prepay.columns
+
+ 
+
+ 
+
+# In[30]:
+
+ 
+
+ 
+
+combined_df_prepay1=combined_df_prepay[["CLAIM_ID","QC_Date","Is_Error"]]
+
+ 
+
+ 
+
+# In[31]:
+
+ 
+
+ 
+
+# Step 1: Create a new DataFrame with renamed and selected columns
+
+ 
+
+transformed_df = combined_df_prepay1.rename(columns={
+
+ 
+
+    'CLAIM_ID': 'CLAIM_ID',
+
+ 
+
+    'QC_Date': 'QC_Date'
+
+ 
+
+})[['CLAIM_ID', 'Is_Error', 'QC_Date']]
+
+ 
+
+ 
+
+ 
+
+# Step 2: Create Error_Type and Error_Cat columns
+
+ 
+
+transformed_df['Error_Type'] = transformed_df['Is_Error']
+
+ 
+
+transformed_df['Error_Cat'] = transformed_df['Is_Error'].apply(lambda x: 1 if str(x).strip().lower() == 'yes' else 0)
+
+# Step 3: Drop Is_Error
+
+ 
+
+transformed_df.drop(columns=['Is_Error'], inplace=True)
+
+ 
+
+ 
+
+ 
+
+# Step 4: Reorder columns
+
+ 
+
+transformed_df = transformed_df[['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat']]
+
+ 
+
+ 
+
+ 
+
+# Step 5: Sort the DataFrame
+
+ 
+
+transformed_df.sort_values(by=['CLAIM_ID', 'Error_Type', 'QC_Date', 'Error_Cat'], inplace=True)
+
+ 
+
+ 
+
+# In[32]:
+
+ 
+
+ 
+
+transformed_df['QC_Date'] = pd.to_datetime(transformed_df['QC_Date']).dt.date
+
+ 
+
+ 
+
+# In[33]:
+
+ 
+
+ 
+
+transformed_df.head(10)
+
+ 
+
+ 
+
+# In[34]:
+
+ 
+
+ 
+
+count_nat = transformed_df['QC_Date'].isna().sum()
+
+ 
+
+print("Number of rows with QC_DATE as NaT:", count_nat)
+
+ 
+
+ 
+
+# In[35]:
+
+ 
+
+ 
+
+transformed_df=transformed_df.dropna(subset="QC_Date")
+
+ 
+
+ 
+
+# In[36]:
+
+ 
+
+ 
+
+combine_df_prepay2=transformed_df.copy()
+
+ 
+
+ 
+
+# In[37]:
+
+ 
+
+ 
+
+alldata=pd.concat([combine_df_prepay2,combine_df_postpay2,combined_df_hcdc2],axis=0)
+
+ 
+
+ 
+
+# In[38]:
+
+ 
+
+ 
+
+alldata.head(1)
+
+ 
+
+ 
+
+# In[39]:
+
+ 
+
+ 
+
+alldata.shape
+
+ 
+
+ 
+
+# In[40]:
+
+ 
+
+ 
+
+all_data=alldata.copy()
+
+ 
+
+ 
+
+# In[41]:
+
+ 
+
+ 
+
+sorted_df = all_data.sort_values(by='QC_Date', ascending=True)
+
+ 
+
+ 
+
+# In[42]:
+
+ 
+
+ 
+
+sorted_df = sorted_df[sorted_df["QC_Date"].notnull()]
+
+ 
+
+ 
+
+# In[43]:
+
+ 
+
+ 
+
+sorted_df = sorted_df[sorted_df["QC_Date"] >= pd.to_datetime("2024-01-01").date()]
+
+ 
+
+ 
+
+# In[44]:
+
+ 
+
+ 
+
+sorted_df['Error_Cat_max'] = sorted_df.groupby('CLAIM_ID')['Error_Cat'].transform('max')
+
+sorted_df['Error_Cat'] = sorted_df['Error_Cat_max']
+
+ 
+
+ 
+
+# In[45]:
+
+ 
+
+ 
+
+sorted_df.drop(columns=['Error_Cat_max'], inplace=True)
+
+sorted_df.drop_duplicates(subset=['CLAIM_ID','Error_Cat'], inplace=True)
+
+ 
+
+ 
+
+# In[46]:
+
+ 
+
+ 
+
+sorted_df['QC_Date'] = pd.to_datetime(sorted_df['QC_Date'], errors='coerce')
+
+ 
+
+filtered_df = sorted_df[(sorted_df['QC_Date'].dt.year > 2024) & (sorted_df['QC_Date'].dt.month > 1)]
+
+ 
+
+ 
+
+# In[47]:
+
+ 
+
+ 
+
+mask = ~sorted_df['CLAIM_ID'].isin(filtered_df['CLAIM_ID'])
+
+model_df = sorted_df[mask]
+
+print("model_df shape:", model_df.shape)
+
+print("filtered_df shape:", filtered_df.shape)
+
+filtered_df_oop=filtered_df.copy()
+
+ 
+
+ 
+
+# In[48]:
+
+ 
+
+ 
+
+import tiktoken
+
+import time
+
+from sklearn.metrics import accuracy_score, balanced_accuracy_score, precision_score, recall_score
+
+from sklearn.metrics import confusion_matrix
+
+from openai import AzureOpenAI
+
+from sklearn.ensemble import RandomForestClassifier, VotingClassifier
+
+from xgboost import XGBClassifier
+
+from sklearn.model_selection import GridSearchCV
+
+from sklearn.metrics import roc_auc_score
+
+import gc
+
+import os
+
+import sys
+
+import pandas as pd
+
+import pyodbc
+
+import numpy as np
+
+import pickle
+
+from itertools import combinations
+
+from datetime import datetime
+
+from sklearn.model_selection import train_test_split, StratifiedKFold, GridSearchCV
+
+from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.metrics import roc_curve, roc_auc_score
+
+import warnings
+
+import pyodbc
+
+from sklearn.model_selection import train_test_split
+
+warnings.filterwarnings("ignore", category=FutureWarning)
+
+gc.collect()
+
+total = sum(sys.getsizeof(eval(var)) for var in dir() if not var.startswith("__"))
+
+print(f"Used: {total} bytes")
+
+ 
+
+ 
+
+# In[49]:
+
+ 
+
+ 
+
+#model_df=model_df.head(15000)
+
+ 
+
+ 
+
+# In[50]:
+
+ 
+
+ 
+
+train_df,test_df=train_test_split(model_df,test_size=0.3,random_state=42)
+
+train_df=train_df.reset_index(drop=True)
+
+test_df=test_df.reset_index(drop=True)
+
+train_df.shape,test_df.shape
+
+ 
+
+ 
+
+# In[51]:
+
+ 
+
+ 
+
+#train_df=train_df.head(1000)
+
+ 
+
+ 
+
+# In[52]:
+
+ 
+
+ 
+
+train_df["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[53]:
+
+ 
+
+ 
+
+test_df["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[54]:
+
+ 
+
+ 
+
+test_df.head(1)
+
+ 
+
+ 
+
+# In[55]:
+
+ 
+
+ 
+
+train_df["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[56]:
+
+ 
+
+ 
+
+test_df["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[57]:
+
+ 
+
+ 
+
+train_df.shape
+
+ 
+
+ 
+
+# In[58]:
+
+ 
+
+ 
+
+train_df.to_excel("train_Df.xlsx")
+
+ 
+
+ 
+
+# In[59]:
+
+ 
+
+ 
+
+model_df1=model_df.copy()
+
+ 
+
+ 
+
+# In[60]:
+
+ 
+
+ 
+
+model_df111=model_df1.copy()
+
+ 
+
+ 
+
+# In[61]:
+
+ 
+
+ 
+
+model_df=train_df.copy()
+
+ 
+
+ 
+
+# In[62]:
+
+ 
+
+ 
+
+model_df112=train_df.copy()
+
+ 
+
+ 
+
+# In[63]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+conn = pyodbc.connect(f'DRIVER={{SQL Server}};SERVER={server};DATABASE={db};Trusted_Connection=yes')
+
+ 
+
+ 
+
+# In[64]:
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+# In[65]:
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLCL_CLAIM]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+# In[66]:
+
+ 
+
+ 
+
+print("Claim-level shape (training):", result_data.shape)
+
+ 
+
+ 
+
+ 
+
+result_data.rename(columns={"CLCL_ID":"CLAIM_ID"}, inplace=True)
+
+ 
+
+# Merge into training data
+
+ 
+
+training_merged = pd.merge(model_df, result_data, on="CLAIM_ID", how="left").drop_duplicates()
+
+ 
+
+print("After merge training_merged shape:", training_merged.shape)
+
+ 
+
+ 
+
+ 
+
+# --------------------------------------------------------------------------------
+
+ 
+
+# 5) FEATURE ENGINEERING for training
+
+ 
+
+# --------------------------------------------------------------------------------
+
+ 
+
+# Example: drop certain columns with single values or columns not needed
+
+ 
+
+cols_to_drop = [
+
+ 
+
+    "CLCL_CUR_STS","CLST_SEQ_NO","CLCL_LAST_ACT_DTM","CLCL_PAID_DT","CLCL_NEXT_REV_DT",
+
+ 
+
+    "CLCL_LOW_SVC_DT","CLCL_HIGH_SVC_DT","CLCL_ACD_DT","CLCL_CURR_ILL_DT","CLCL_SIMI_ILL_DT",
+
+ 
+
+    "CLCL_DRAG_DT","CLCL_EOB_EXCD_ID","CLCL_BATCH_ID","CLCL_BATCH_ACTION","CLCL_CE_IND",
+
+ 
+
+    "PDDS_MCTR_BCAT","CLCL_MICRO_ID","CLCL_RELHP_FROM_DT","CLCL_RELHP_TO_DT","USUS_ID",
+
+ 
+
+    "CLCL_LOCK_TOKEN","ATXR_SOURCE_ID","PCBC_ID_NVL"
+
+ 
+
+]
+
+ 
+
+df_filtered = training_merged.drop(columns=cols_to_drop, errors='ignore')
+
+ 
+
+ 
+
+ 
+
+# Convert date columns & compute differences
+
+ 
+
+date_cols = ["CLCL_INPUT_DT","CLCL_RECD_DT","CLCL_ACPT_DTM","MEPE_PLAN_ENTRY_DT"]
+
+ 
+
+for dc in date_cols:
+
+ 
+
+    if dc in df_filtered.columns:
+
+ 
+
+        df_filtered[dc] = pd.to_datetime(df_filtered[dc], errors='coerce')
+
+ 
+
+ 
+
+ 
+
+for c1, c2 in combinations(date_cols, 2):
+
+ 
+
+    if c1 in df_filtered.columns and c2 in df_filtered.columns:
+
+ 
+
+        diff_col = f"Diff_{c1}_{c2}"
+
+ 
+
+        df_filtered[diff_col] = (df_filtered[c2] - df_filtered[c1]).dt.days
+
+ 
+
+ 
+
+ 
+
+df_filtered = df_filtered.drop(columns=date_cols, errors='ignore')
+
+ 
+
+ 
+
+ 
+
+# We'll define the "overalldata" as everything except we keep 'CLAIM_ID','Error_Type','QC_Date','Error_Cat'
+
+ 
+
+# for train/test splitting. Then we remove them from actual training features.
+
+ 
+
+keep_cols = ['CLAIM_ID','Error_Type','QC_Date','Error_Cat']
+
+ 
+
+overalldata = df_filtered[keep_cols].copy()
+
+ 
+
+training_merged1=training_merged.drop_duplicates(subset="CLAIM_ID",keep="first")
+
+ 
+
+ 
+
+# In[67]:
+
+ 
+
+ 
+
+#MIPS Addition
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_EOB_EXCD
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+result=result_data.groupby('CLCL_ID',as_index=False).agg({'CDML_EOB_EXCD':lambda x:' ,'.join(x)})
+
+result['MIPS']=result['CDML_EOB_EXCD'].apply(lambda x:1 if '4AA' in x.split(',') else 0)
+
+result_rows=result[result['MIPS']==1]
+
+result=result[['CLCL_ID','MIPS']]
+
+result_mips=result.copy()
+
+df_filtered=pd.merge(df_filtered,result_mips,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[68]:
+
+ 
+
+ 
+
+#Rendering Providr addition
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CLPE_PRPR_TYPE
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLPE_PROV_DATA]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+result=result_data.groupby('CLCL_ID',as_index=False).agg({'CLPE_PRPR_TYPE':lambda x:' ,'.join(x)})
+
+result['RE']=result['CLPE_PRPR_TYPE'].apply(lambda x:1 if 'RE ' in x.split(',') else 0)
+
+result_rows=result[result['RE']==1]
+
+result=result[['CLCL_ID','RE']]
+
+result_RE=result.copy()
+
+df_filtered=pd.merge(df_filtered,result_RE,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[69]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+model_df.head(1)
+
+model_df["adjusted"]=model_df["CLAIM_ID"].astype(str).str.endswith('00').astype(int)
+
+model_df['adjusted'].sum()
+
+result=model_df[['CLAIM_ID','adjusted']]
+
+result.shape
+
+ 
+
+ 
+
+# In[70]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,result,left_on="CLAIM_ID",right_on="CLAIM_ID",how="left")
+
+ 
+
+ 
+
+# In[71]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop_duplicates()
+
+ 
+
+ 
+
+# In[72]:
+
+ 
+
+ 
+
+#service date -recieveddate
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_FROM_DT,CDML_TO_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+lineleveldata=result_data.copy()
+
+# Convert date columns to datetime type
+
+ 
+
+lineleveldata['CDML_FROM_DT'] = pd.to_datetime(lineleveldata['CDML_FROM_DT'])
+
+ 
+
+lineleveldata['CDML_TO_DT'] = pd.to_datetime(lineleveldata['CDML_TO_DT'])
+
+ 
+
+ 
+
+ 
+
+# Group by clcl_id and get min start date and max end date
+
+ 
+
+result = lineleveldata.groupby('CLCL_ID').agg(
+
+ 
+
+    min_start_date=('CDML_FROM_DT', 'min'),
+
+ 
+
+    max_end_date=('CDML_TO_DT', 'max')
+
+ 
+
+).reset_index()
+
+ 
+
+ 
+
+ 
+
+print(result)
+
+ 
+
+result.shape
+
+ 
+
+ 
+
+# In[73]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CLCL_RECD_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLCL_CLAIM]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+overalldata1=result_data.copy()
+
+# Convert date columns to datetime type
+
+overalldata1['CLCL_RECD_DT'] = pd.to_datetime(overalldata1['CLCL_RECD_DT'])
+
+overalldata1=pd.merge(overalldata1,result,on="CLCL_ID",how="left")
+
+overalldata1["duration_days"]=(overalldata1["CLCL_RECD_DT"]-overalldata1["max_end_date"]).dt.days
+
+overalldata1["duration_days_dos"]=(overalldata1["max_end_date"]-overalldata1["min_start_date"]).dt.days
+
+ 
+
+overalldata1=overalldata1[["CLCL_ID","duration_days","duration_days_dos"]]
+
+ 
+
+ 
+
+# In[74]:
+
+ 
+
+ 
+
+overalldata1=overalldata1.drop_duplicates()
+
+ 
+
+ 
+
+# In[75]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,overalldata1,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[76]:
+
+ 
+
+ 
+
+#TOTAL no of lines and no of lines EOB ATTACHED
+
+#service date -recieveddate
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_EOB_EXCD,CDML_SEQ_NO,CDML_PRE_AUTH_IND
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[77]:
+
+ 
+
+ 
+
+summary = result_data.groupby('CLCL_ID').agg(
+
+ 
+
+    TOTAL_ROWS=('CDML_SEQ_NO', 'count'),
+
+ 
+
+    BLANK_EOB_EXCD_ROWS=('CDML_EOB_EXCD', lambda x: x.isna().sum() + (x == '').sum()),
+
+    BLANK_PREAUTH_ROWS=('CDML_PRE_AUTH_IND', lambda x: x.isna().sum() + (x == '').sum())
+
+   
+
+    
+
+ 
+
+).reset_index()
+
+ 
+
+ 
+
+# In[78]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x','CLCL_ID_y','CLCL_ID'])
+
+ 
+
+ 
+
+# In[79]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,summary,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[80]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_IPCD_MOD2,CDML_IPCD_MOD3,CDML_IPCD_MOD4
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# Assuming result_data is your DataFrame
+
+ 
+
+modifier_cols = ["CDML_IPCD_MOD2", "CDML_IPCD_MOD3", "CDML_IPCD_MOD4"]
+
+ 
+
+ 
+
+ 
+
+# Replace blank strings or whitespace with None
+
+ 
+
+result_data[modifier_cols] = result_data[modifier_cols].replace(r'^\s*$', None, regex=True)
+
+ 
+
+ 
+
+ 
+
+# Group by CLCL_ID and count non-blank cells for each modifier
+
+ 
+
+grouped = result_data.groupby("CLCL_ID")[modifier_cols].apply(lambda g: g.notna().sum()).reset_index()
+
+ 
+
+ 
+
+ 
+
+# Rename columns for clarity
+
+ 
+
+grouped.columns = ["CLCL_ID", "MOD2_NON_BLANK_COUNT", "MOD3_NON_BLANK_COUNT", "MOD4_NON_BLANK_COUNT"]
+
+ 
+
+ 
+
+ 
+
+# Calculate total non-blank count across all modifiers
+
+ 
+
+grouped["TOTAL_NON_BLANK_COUNT"] = (
+
+ 
+
+    grouped["MOD2_NON_BLANK_COUNT"] +
+
+ 
+
+    grouped["MOD3_NON_BLANK_COUNT"] +
+
+ 
+
+    grouped["MOD4_NON_BLANK_COUNT"]
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Final output
+
+ 
+
+print(grouped)
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+ 
+
+# In[81]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,grouped,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[82]:
+
+ 
+
+ 
+
+df_filtered.columns
+
+ 
+
+ 
+
+# In[83]:
+
+ 
+
+ 
+
+#ADD TEXTUAL DATA
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[84]:
+
+ 
+
+ 
+
+cl_line_level=result_data.copy()
+
+ 
+
+ 
+
+# In[85]:
+
+ 
+
+ 
+
+cl_line_level.IPCD_ID=cl_line_level.IPCD_ID.str.strip()
+
+all_ipcd_det=cl_line_level.IPCD_ID.unique()
+
+all_ipcd_1=pd.DataFrame(all_ipcd_det)
+
+all_ipcd_1.rename(columns={0:'IPCD'},inplace=True)
+
+all_ipcd_1=all_ipcd_1[all_ipcd_1['IPCD'].str.strip()!='']
+
+all_ipcd_1=all_ipcd_1.sort_values(by="IPCD")
+
+all_ipcd_1
+
+ 
+
+ 
+
+# In[86]:
+
+ 
+
+ 
+
+#Extract IPCD Details
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server +
+
+                      ';DATABASE=' + db +
+
+                      ';Trusted_Connection=yes')
+
+ 
+
+ 
+
+batch_size = 1000
+
+total_records = len(all_ipcd_1)
+
+start_index = 0
+
+ 
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+while start_index < total_records:
+
+    end_index = min(start_index + batch_size, total_records)
+
+    batch_claim_ids = all_ipcd_1['IPCD'].iloc[start_index:end_index].astype(str).tolist()
+
+ 
+
+    sql = f"""
+
+        SELECT *
+
+        FROM [jhhcreport].[dbo].[CMC_IPCD_PROC_CD]
+
+        WHERE IPCD_ID IN ({', '.join(['?']*len(batch_claim_ids))})
+
+    """
+
+ 
+
+    batch_data_frame = pd.read_sql(sql, conn, params=batch_claim_ids)
+
+ 
+
+    result_data = pd.concat([result_data, batch_data_frame])
+
+ 
+
+ 
+
+ 
+
+ 
+
+    start_index = end_index
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[87]:
+
+ 
+
+ 
+
+IPCD_details=result_data.copy()
+
+ 
+
+ 
+
+# In[88]:
+
+ 
+
+ 
+
+cl_line_level.IDCD_ID=cl_line_level.IDCD_ID.str.strip()
+
+all_idcd_det=cl_line_level.IDCD_ID.unique()
+
+all_idcd_1=pd.DataFrame(all_idcd_det)
+
+all_idcd_1.rename(columns={0:'IDCD'},inplace=True)
+
+all_idcd_1=all_idcd_1[all_idcd_1['IDCD'].str.strip()!='']
+
+all_idcd_1=all_idcd_1.sort_values(by="IDCD")
+
+#Extract claim overall data
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server +
+
+                      ';DATABASE=' + db +
+
+                      ';Trusted_Connection=yes')
+
+ 
+
+ 
+
+batch_size = 1000
+
+total_records = len(all_idcd_1)
+
+start_index = 0
+
+ 
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+while start_index < total_records:
+
+    end_index = min(start_index + batch_size, total_records)
+
+    batch_claim_ids = all_idcd_1['IDCD'].iloc[start_index:end_index].astype(str).tolist()
+
+ 
+
+    sql = f"""
+
+        SELECT *
+
+        FROM [jhhcreport].[dbo].[CMC_IDCD_DIAG_CD]
+
+        WHERE IDCD_ID IN ({', '.join(['?']*len(batch_claim_ids))})
+
+    """
+
+ 
+
+    batch_data_frame = pd.read_sql(sql, conn, params=batch_claim_ids)
+
+ 
+
+    result_data = pd.concat([result_data, batch_data_frame])
+
+ 
+
+ 
+
+ 
+
+ 
+
+    start_index = end_index
+
+ 
+
+conn.close()
+
+ 
+
+print(result_data.shape)
+
+IDCD_details=result_data.copy()
+
+ 
+
+ 
+
+# In[89]:
+
+ 
+
+ 
+
+mdl1=cl_line_level[["CLCL_ID","CDML_SEQ_NO","IPCD_ID","IDCD_ID"]]
+
+mdl1.IDCD_ID=mdl1.IDCD_ID.str.strip()
+
+mdl1.IPCD_ID=mdl1.IPCD_ID.str.strip()
+
+IDCD_details.IDCD_ID=IDCD_details.IDCD_ID.str.strip()
+
+IDCD_details.IDCD_DESC=IDCD_details.IDCD_DESC.str.strip()
+
+IDCD_details1=IDCD_details[["IDCD_ID","IDCD_DESC"]]
+
+IDCD_details2=IDCD_details1[IDCD_details1['IDCD_DESC']!='Invalid Diagnosis Code']
+
+IDCD_details3=IDCD_details2.drop_duplicates()
+
+IDCD_details4=IDCD_details3[~IDCD_details3["IDCD_DESC"].str.contains('Invalid',na=False)]
+
+combined_texts = IDCD_details4.groupby('IDCD_ID')['IDCD_DESC'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC')
+
+IDCD_all = pd.merge(IDCD_details4, combined_texts, on='IDCD_ID', how='left')
+
+IDCD_all=IDCD_all[["IDCD_ID","Combined_DESC"]]
+
+IDCD_all.rename(columns={"Combined_DESC":'Combined_DESC_IDCD'},inplace=True)                                                                      
+
+IDCD_all=IDCD_all.drop_duplicates()
+
+IDCD_all=IDCD_all[IDCD_all['Combined_DESC_IDCD'].str.strip()!='']
+
+IDCD_all['Combined_DESC_IDCD'].isnull().sum()
+
+IPCD_details.IPCD_ID=IPCD_details.IPCD_ID.str.strip()
+
+IPCD_details.IPCD_DESC=IPCD_details.IPCD_DESC.str.strip()
+
+IPCD_details1=IPCD_details[["IPCD_ID","IPCD_DESC"]]
+
+IPCD_details2=IPCD_details1[IPCD_details1['IPCD_DESC']!='Invalid Diagnosis Code']
+
+IPCD_details3=IPCD_details2.drop_duplicates()
+
+IPCD_details4=IPCD_details3[~IPCD_details3["IPCD_DESC"].str.contains('Invalid',na=False)]
+
+combined_texts = IPCD_details4.groupby('IPCD_ID')['IPCD_DESC'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC')
+
+IPCD_all = pd.merge(IPCD_details4, combined_texts, on='IPCD_ID', how='left')
+
+IPCD_all=IPCD_all[["IPCD_ID","Combined_DESC"]]
+
+IPCD_all.rename(columns={"Combined_DESC":'Combined_DESC_IPCD'},inplace=True)
+
+IPCD_all=IPCD_all.drop_duplicates()
+
+IPCD_all=IPCD_all[IPCD_all['Combined_DESC_IPCD'].str.strip()!='']
+
+IPCD_all['Combined_DESC_IPCD'].isnull().sum()
+
+mdl2=pd.merge(mdl1,IDCD_all,on="IDCD_ID",how="left")
+
+print(mdl1.shape,mdl2.shape)
+
+mdl3=pd.merge(mdl2,IPCD_all,on="IPCD_ID",how="left")
+
+print(mdl2.shape,mdl3.shape)
+
+combined_texts = mdl3.groupby('CLCL_ID')['Combined_DESC_IDCD'].apply(lambda x: ' '.join(map(str,x))).reset_index(name='Combined_DESC_IDCD_all')
+
+mdl4 = pd.merge(mdl3, combined_texts, on='CLCL_ID', how='left')
+
+mdl4['Combined_DESC_IPCD']=mdl4['Combined_DESC_IPCD'].fillna("Not Available")
+
+combined_texts = mdl4.groupby('CLCL_ID')['Combined_DESC_IPCD'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC_IPCD_all')
+
+mdl5 = pd.merge(mdl4, combined_texts, on='CLCL_ID', how='left')
+
+mdl6=mdl5[["CLCL_ID","Combined_DESC_IDCD_all","Combined_DESC_IPCD_all"]]
+
+mdl6=mdl6.drop_duplicates()
+
+ 
+
+ 
+
+# In[90]:
+
+ 
+
+ 
+
+mdl6["consolidated_text"]="Diagnosis :"+mdl6["Combined_DESC_IDCD_all"].astype(str)+"   "+ "Procedure :"+mdl6["Combined_DESC_IPCD_all"]
+
+ 
+
+ 
+
+# In[91]:
+
+ 
+
+ 
+
+mdl7=mdl6.head(3)
+
+ 
+
+ 
+
+# In[92]:
+
+ 
+
+ 
+
+mdl6.shape
+
+ 
+
+ 
+
+# In[93]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = mdl6["consolidated_text"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+df_train_embeddings["CLCL_ID"]=mdl6["CLCL_ID"]
+
+ 
+
+ 
+
+# In[94]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+ 
+
+ 
+
+# In[95]:
+
+ 
+
+ 
+
+tst1 = df_filtered.apply(
+
+ 
+
+    lambda row: (
+
+ 
+
+        f"This claim is for claim type {row['CLCL_CL_TYPE']}  and claim subtype {row['CLCL_CL_SUB_TYPE']} "
+
+ 
+
+        f"and age of person treated is {row['CLCL_ME_AGE']}, with gender being {row['MEME_SEX']}. "
+
+ 
+
+        f"The physician is from network {row['CLCL_NTWK_IND']}. "
+
+ 
+
+        f"The total charged amount is {row['CLCL_TOT_CHG']}, and the input method for the claim is {row['CLCL_INPUT_METH']}. "
+
+ 
+
+        f"It took {row['Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM']} days to accept the claim post input in the system. "
+
+ 
+
+        f"{row['Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT']} days passed between plan entry and claim input. "
+
+ 
+
+        f"The difference between claim received and accepted date is {row['Diff_CLCL_RECD_DT_CLCL_ACPT_DTM']} days."
+
+ 
+
+        f"This is claim is adjusted or non adjusted we indicate 1 if adjusted for this claim this value is {row['adjusted']}"
+
+        f"The total number of rows in claim line level is {row['TOTAL_ROWS']} and in line level data blank EOB;s are {row['BLANK_EOB_EXCD_ROWS']}"
+
+ 
+
+ 
+
+    ),
+
+ 
+
+    axis=1
+
+ 
+
+)
+
+ 
+
+ 
+
+df_filtered["Claim_Details"]=tst1
+
+df_filtered1=df_filtered[["CLAIM_ID","Claim_Details"]]
+
+ 
+
+ 
+
+# In[96]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = df_filtered1["Claim_Details"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_claim_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+df_train_embeddings["CLCL_ID"]=df_filtered1["CLAIM_ID"]
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_y'])
+
+model_df=df_filtered.copy()
+
+ 
+
+ 
+
+# In[97]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLST_STATUS]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[98]:
+
+ 
+
+ 
+
+result_data=result_data.sort_values(by=['CLCL_ID','CLST_STS_DTM'],ascending=[True,True])
+
+model_df1=model_df[["CLAIM_ID","QC_Date"]]
+
+ 
+
+ 
+
+# In[99]:
+
+ 
+
+ 
+
+model_df1.columns
+
+ 
+
+ 
+
+# In[100]:
+
+ 
+
+ 
+
+model_df1['QC_Date'] = pd.to_datetime(model_df1['QC_Date'])
+
+ 
+
+result_data['CLST_STS_DTM'] = pd.to_datetime(result_data['CLST_STS_DTM'], format='%Y-%m-%d %H:%M:%S:%f', errors='coerce')
+
+ 
+
+ 
+
+ 
+
+# Perform left join: model_df1 LEFT JOIN result_data ON CLCL_ID == CLAIM_ID
+
+ 
+
+merged_df = pd.merge(
+
+ 
+
+    result_data,
+
+ 
+
+    model_df1,
+
+ 
+
+    left_on='CLCL_ID',
+
+ 
+
+    right_on='CLAIM_ID',
+
+ 
+
+    how='left'
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Filter rows where CLST_STS_DTM < QC_date
+
+ 
+
+model_df2 = merged_df[merged_df['CLST_STS_DTM'] < merged_df['QC_Date']]
+
+ 
+
+
+ 
+
+ 
+
+# In[101]:
+
+ 
+
+ 
+
+# Function to build status description per claim
+
+ 
+
+def build_status_description(group):
+
+ 
+
+    descriptions = []
+
+ 
+
+    for i, row in enumerate(group.itertuples(), start=1):
+
+ 
+
+        if i == 1:
+
+ 
+
+            descriptions.append(f"This claim was processed by {row.USUS_ID} and changed to status {row.CLST_STS}")
+
+ 
+
+        else:
+
+ 
+
+            descriptions.append(f"then processed by {row.USUS_ID} and changed to status {row.CLST_STS}")
+
+ 
+
+    return ', '.join(descriptions) + '.'
+
+ 
+
+ 
+
+ 
+
+# Apply the function to each group of CLCL_ID
+
+ 
+
+result_df = model_df2.groupby('CLCL_ID').apply(build_status_description).reset_index()
+
+ 
+
+result_df.columns = ['CLCL_ID', 'STATUS_DESCRIPTION']
+
+ 
+
+ 
+
+ 
+
+# Show the result
+
+ 
+
+print(result_df)
+
+ 
+
+
+ 
+
+ 
+
+# In[102]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,result_df,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[103]:
+
+ 
+
+ 
+
+df_filtered1=df_filtered.copy()
+
+ 
+
+ 
+
+# In[104]:
+
+ 
+
+ 
+
+df_filtered1["STATUS_DESCRIPTION"]=df_filtered1["STATUS_DESCRIPTION"].astype(str)
+
+ 
+
+ 
+
+# In[105]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = df_filtered1["STATUS_DESCRIPTION"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+ 
+
+ 
+
+# In[106]:
+
+ 
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_status_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+ 
+
+df_train_embeddings["CLCL_ID"]=df_filtered1["CLAIM_ID"]
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+ 
+
+ 
+
+# In[107]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_y'])
+
+ 
+
+ 
+
+# In[108]:
+
+ 
+
+ 
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+ 
+
+ 
+
+# In[109]:
+
+ 
+
+ 
+
+allcolsdata.to_excel("allcols.xlsx")
+
+ 
+
+ 
+
+# In[110]:
+
+ 
+
+ 
+
+model_df=df_filtered[["CLAIM_ID","AGAG_ID"]]
+
+ 
+
+ 
+
+# In[111]:
+
+ 
+
+ 
+
+model_df=model_df.rename(columns={'CLAIM_ID':'CLCL_ID'})
+
+ 
+
+ 
+
+# In[112]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLCL_ID"] = model_df["CLCL_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLCL_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_FROM_DT,CDML_TO_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+linedata=result_data.copy()
+
+ 
+
+ 
+
+# In[113]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["AGAG_ID"] = model_df["AGAG_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["AGAG_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_AGAG_AGREEMENT]
+
+ 
+
+        WHERE AGAG_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+agagdata=result_data.copy()
+
+linedata['CDML_TO_DT']=pd.to_datetime(linedata['CDML_TO_DT'])
+
+linedata1=linedata.groupby('CLCL_ID',as_index=False)['CDML_TO_DT'].max()
+
+ 
+
+ 
+
+# In[114]:
+
+ 
+
+ 
+
+model_df1=pd.merge(model_df,linedata1,on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[115]:
+
+ 
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# Step 1: Convert AGAG_TERM_DT to string and replace '9999-12-31 00:00:00' with '2026-12-31'
+
+ 
+
+agagdata['AGAG_TERM_DT'] = agagdata['AGAG_TERM_DT'].astype(str).replace('9999-12-31 00:00:00', '2026-12-31')
+
+ 
+
+ 
+
+ 
+
+# Step 2: Safely convert to datetime with mixed formats
+
+ 
+
+agagdata['AGAG_TERM_DT'] = pd.to_datetime(agagdata['AGAG_TERM_DT'], format='mixed')
+
+ 
+
+ 
+
+ 
+
+# Step 3: Convert other date columns
+
+ 
+
+model_df1['CDML_TO_DT']  = pd.to_datetime(model_df1['CDML_TO_DT'], format='mixed')
+
+ 
+
+agagdata['AGAG_EFF_DT']  = pd.to_datetime(agagdata['AGAG_EFF_DT'], format='mixed')
+
+ 
+
+ 
+
+ 
+
+# Step 4: Merge and filter
+
+ 
+
+merged_df = pd.merge(model_df1, agagdata, on='AGAG_ID', how='inner')
+
+ 
+
+ 
+
+ 
+
+filtered_df = merged_df[
+
+ 
+
+    (merged_df['CDML_TO_DT'] > merged_df['AGAG_EFF_DT']) &
+
+ 
+
+    (merged_df['CDML_TO_DT'] < merged_df['AGAG_TERM_DT'])
+
+ 
+
+]
+
+ 
+
+ 
+
+ 
+
+# Output
+
+ 
+
+ 
+
+ 
+
+
+ 
+
+ 
+
+# In[116]:
+
+ 
+
+ 
+
+# Step 1: Count how many times each CLCL_ID appears
+
+ 
+
+counts = filtered_df['CLCL_ID'].value_counts()
+
+ 
+
+ 
+
+ 
+
+# Step 2: Filter only those CLCL_IDs that appear exactly twice
+
+ 
+
+clcl_ids_with_two_rows = counts[counts == 2].index
+
+ 
+
+ 
+
+ 
+
+# Step 3: Filter the original filtered_df for those CLCL_IDs
+
+ 
+
+result_df1 = filtered_df[filtered_df['CLCL_ID'].isin(clcl_ids_with_two_rows)]
+
+ 
+
+ 
+
+ 
+
+# Output
+
+ 
+
+print(result_df1)
+
+ 
+
+ 
+
+# In[117]:
+
+ 
+
+ 
+
+# Define the mapping dictionary
+
+ 
+
+cat_description_map = {
+
+ 
+
+    'D': 'Dental',
+
+ 
+
+    'M': 'Medical',
+
+ 
+
+    'V': 'Vision'
+
+ 
+
+}
+
+ 
+
+ 
+
+ 
+
+# Add a new column AGAG_CAT_description using map
+
+ 
+
+filtered_df['AGAG_CAT_description'] = filtered_df['AGAG_CAT'].map(cat_description_map)
+
+ 
+
+ 
+
+ 
+
+filtered_df.head(3)
+
+ 
+
+ 
+
+# In[118]:
+
+ 
+
+ 
+
+rwh_ind_map = {
+
+ 
+
+    'A': 'Allowable',
+
+ 
+
+    'P': 'Paid'
+
+ 
+
+}
+
+ 
+
+ 
+
+ 
+
+# Add a new column using map and fill missing/None with 'None'
+
+ 
+
+filtered_df['AGAG_RWH_IND_description'] = filtered_df['AGAG_RWH_IND'].map(rwh_ind_map).fillna('None')
+
+filtered_df.head(2)
+
+ 
+
+ 
+
+# In[119]:
+
+ 
+
+ 
+
+ip_price_map = {
+
+ 
+
+    'A': 'DRG Pricing',
+
+ 
+
+    'B': 'Per Diem/Per Case',
+
+ 
+
+    'C': 'Per Case (All Inclusive)',
+
+ 
+
+    'D': 'Per Case (Non Inclusive)',
+
+ 
+
+    'E': 'Ambulatory Payment Classification',
+
+ 
+
+    'G': 'NetworX Pricer/DRG',
+
+ 
+
+    'I': 'All-Inclusive Per Diem',
+
+ 
+
+    'M': 'Multiple Surgery',
+
+ 
+
+    'P': 'R & B Per Diem',
+
+ 
+
+    'S': 'ASC Pricing',
+
+ 
+
+    'W': 'NetworX Pricer',
+
+ 
+
+    'X': 'Per Case/Per Diem/DRG'
+
+ 
+
+}
+
+ 
+
+
+# Apply the mapping and handle missing/null values as 'None'
+
+ 
+
+filtered_df['AGAG_IP_PRICE_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_IP_PRICE_IND'].map(ip_price_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Optional: check unique mappings
+
+ 
+
+print(filtered_df[['AGAG_IP_PRICE_IND', 'AGAG_IP_PRICE_IND_description']].drop_duplicates())
+
+ 
+
+ 
+
+# In[120]:
+
+ 
+
+ 
+
+op_price_map = {
+
+ 
+
+    'A': 'DRG',
+
+ 
+
+    'B': 'Per Diem/Per Case',
+
+ 
+
+    'C': 'Per Case (All Inclusive)',
+
+ 
+
+    'D': 'Per Case (Non Inclusive)',
+
+ 
+
+    'E': 'Ambulatory Payment Classification',
+
+ 
+
+    'G': 'NetworX Pricer/DRG',
+
+ 
+
+    'I': 'All-Inclusive Per Diem',
+
+ 
+
+    'M': 'Multiple Surgery',
+
+ 
+
+    'P': 'R & B Per Diem',
+
+ 
+
+    'S': 'ASC Pricing',
+
+ 
+
+    'W': 'NetworX Pricer',
+
+ 
+
+    'X': 'Per Case/Per Diem/DRG',
+
+ 
+
+    'Y': 'Ambulatory Patient Groups'
+
+ 
+
+}
+
+ 
+
+
+ 
+
+
+ 
+
+# Add new column for AGAG_OP_PRICE_IND description
+
+ 
+
+filtered_df['AGAG_OP_PRICE_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_OP_PRICE_IND'].map(op_price_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+# In[121]:
+
+ 
+
+ 
+
+ol_ind_map = {
+
+ 
+
+    'C': '(Pay) Charges',
+
+ 
+
+    'D': 'Discount (off charges)',
+
+ 
+
+    'P': 'Per Diem (found on DRG Rules)',
+
+ 
+
+    'R': 'New DRG (found on DRG Rules)'
+
+ 
+
+}
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+# Add new column for AGAG_OL_IND description
+
+ 
+
+filtered_df['AGAG_OL_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_OL_IND'].map(ol_ind_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+# In[122]:
+
+ 
+
+ 
+
+tst1 = filtered_df.apply(
+
+ 
+
+    lambda row: (
+
+ 
+
+        f"This is about aggrement details aggrement category is  {row['AGAG_CAT_description']} "
+
+        f"and provider aggrement risk withold type  is {row['AGAG_RWH_IND_description']} "
+
+ 
+
+        f"and provider aggrement inpatient pricing type is {row['AGAG_IP_PRICE_IND_description']}, "
+
+        f"  provider aggrement outpatient pricing type {row['AGAG_OP_PRICE_IND_description']}. "
+
+ 
+
+        f"and aggrement outlier indicator is  {row['AGAG_OL_IND_description']}. "
+
+ 
+
+        f"Aggrement description is {row['AGAG_DESC']} "
+
+        f"and aggrement delegated value is  {row['AGAG_DELG_CLAIMS']}.here N denotes No and Y denotes Yes "
+
+ 
+
+        f"and agrrement delegated UM indicator  {row['AGAG_DELG_UM']} here N denotes No and Y denotes Yes "
+
+ 
+
+        f" and prvider aggrement case management indicator is {row['AGAG_DELG_CASE']} here N denotes No and Y denotes Yes "
+
+ 
+
+       
+
+ 
+
+    ),
+
+ 
+
+    axis=1
+
+ 
+
+)
+
+filtered_df["Agreement_desc"]=tst1
+
+ 
+
+ 
+
+# In[123]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = filtered_df["Agreement_desc"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+ 
+
+ 
+
+# In[124]:
+
+ 
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_agag_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+ 
+
+df_train_embeddings["AGAG_ID"]=filtered_df["AGAG_ID"].values
+
+ 
+
+# df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+ 
+
+ 
+
+ 
+
+# In[125]:
+
+ 
+
+ 
+
+df_train_embeddings=df_train_embeddings.drop_duplicates(subset="AGAG_ID",keep="first")
+
+ 
+
+ 
+
+# In[126]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="AGAG_ID",right_on="AGAG_ID", how="left")
+
+ 
+
+ 
+
+# In[127]:
+
+ 
+
+ 
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+allcolsdata.to_excel("allcols.xlsx")
+
+ 
+
+ 
+
+# In[128]:
+
+ 
+
+ 
+
+#df_filtered=pd.merge(df_filtered,df_dup2,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[129]:
+
+ 
+
+ 
+
+#df_filtered['Dup_Ind']=df_filtered['Dup_Ind'].fillna(0)
+
+ 
+
+ 
+
+# In[130]:
+
+ 
+
+ 
+
+features_df = df_filtered.drop(columns=['Error_Type','QC_Date','Error_Cat'], errors='ignore')
+
+ 
+
+ 
+
+# In[131]:
+
+ 
+
+ 
+
+final_col_order = [
+
+ 
+
+    'CLAIM_ID',
+
+ 
+
+    'CLCL_CL_SUB_TYPE','CLST_MCTR_REAS','CLCL_ID_ADJ_FROM','PZAP_ID','CSCS_ID',
+
+ 
+
+    'CLCL_ME_AGE','MEME_SEX','NWPR_PFX','PDBC_PFX_NPPR','PDBC_PFX_SEDF','NWNW_ID',
+
+ 
+
+    'AGAG_ID','CLCL_REL_INFO_IND','CLCL_NTWK_IND','CLCL_TOT_CHG','CLCL_TOT_PAYABLE',
+
+ 
+
+    'CLCL_INPUT_METH','CLCL_OUT_LAB_IND',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_CLCL_RECD_DT','Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_RECD_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_RECD_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_ACPT_DTM_MEPE_PLAN_ENTRY_DT','MIPS','RE','adjusted','duration_days','duration_days_dos','TOTAL_ROWS',
+
+    'BLANK_EOB_EXCD_ROWS','BLANK_PREAUTH_ROWS','MOD2_NON_BLANK_COUNT',
+
+       'MOD3_NON_BLANK_COUNT', 'MOD4_NON_BLANK_COUNT',
+
+       'TOTAL_NON_BLANK_COUNT','embedding_0',
+
+'embedding_1',
+
+'embedding_2',
+
+'embedding_3',
+
+'embedding_4',
+
+'embedding_5',
+
+'embedding_6',
+
+'embedding_7',
+
+'embedding_8',
+
+'embedding_9',
+
+'embedding_10',
+
+ 
+
+'embedding_claim_0',
+
+'embedding_claim_1',
+
+'embedding_claim_2',
+
+'embedding_claim_3',
+
+'embedding_claim_4',
+
+'embedding_claim_5',
+
+'embedding_claim_6',
+
+'embedding_claim_7',
+
+'embedding_claim_8',
+
+'embedding_claim_9',
+
+'embedding_claim_10',
+
+ 
+
+'embedding_status_0',
+
+'embedding_status_1',
+
+'embedding_status_2',
+
+'embedding_status_3',
+
+'embedding_status_4',
+
+'embedding_status_5',
+
+'embedding_status_6',
+
+'embedding_status_7',
+
+'embedding_status_8',
+
+'embedding_status_9',
+
+'embedding_status_10',
+
+ 
+
+    'embedding_agag_0',
+
+'embedding_agag_1',
+
+'embedding_agag_2',
+
+'embedding_agag_3',
+
+'embedding_agag_4',
+
+'embedding_agag_5',
+
+'embedding_agag_6',
+
+'embedding_agag_7',
+
+'embedding_agag_8',
+
+'embedding_agag_9',
+
+'embedding_agag_10',
+
+ 
+
+    'Dup_Ind'
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+ 
+
+]
+
+features_df = features_df[[c for c in final_col_order if c in features_df.columns]]
+
+ 
+
+ 
+
+# In[132]:
+
+ 
+
+ 
+
+filtered_df=filtered_df.rename(columns={'CLCL_ID':'CLAIM_ID'})
+
+ 
+
+ 
+
+# In[133]:
+
+ 
+
+ 
+
+del training_merged
+
+del X_train_embeddings
+
+ 
+
+ 
+
+# In[134]:
+
+ 
+
+ 
+
+model_df=model_df.rename(columns={'CLCL_ID':'CLAIM_ID'})
+
+ 
+
+ 
+
+# In[135]:
+
+ 
+
+ 
+
+features_df["CLAIM_ID"]=features_df["CLAIM_ID"].astype(str)
+
+model_df112["CLAIM_ID"]=model_df112["CLAIM_ID"].astype(str)
+
+ 
+
+ 
+
+# In[136]:
+
+ 
+
+ 
+
+overall_train = pd.merge(features_df, model_df112, on="CLAIM_ID", how="inner").drop_duplicates()
+
+ 
+
+ 
+
+# In[137]:
+
+ 
+
+ 
+
+overall_train["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[138]:
+
+ 
+
+ 
+
+overall_train1 = overall_train.copy()
+
+ 
+
+ 
+
+# In[139]:
+
+ 
+
+ 
+
+overall_train["Error_Cat"].sum()
+
+ 
+
+ 
+
+# In[140]:
+
+ 
+
+ 
+
+drop_cols = ['Error_Type','QC_Date']
+
+ 
+
+ 
+
+# In[141]:
+
+ 
+
+ 
+
+overall_train.drop(columns=drop_cols, inplace=True, errors='ignore')
+
+ 
+
+ 
+
+# In[142]:
+
+ 
+
+ 
+
+cat_cols = [
+
+ 
+
+    'CLCL_CL_SUB_TYPE','CLST_MCTR_REAS','CLCL_ID_ADJ_FROM','PZAP_ID','CSCS_ID',
+
+ 
+
+    'MEME_SEX','NWPR_PFX','PDBC_PFX_NPPR','PDBC_PFX_SEDF','NWNW_ID','AGAG_ID',
+
+ 
+
+    'CLCL_REL_INFO_IND','CLCL_NTWK_IND','CLCL_INPUT_METH','CLCL_OUT_LAB_IND'
+
+ 
+
+]
+
+ 
+
+cont_cols = [
+
+ 
+
+    'Diff_CLCL_INPUT_DT_CLCL_RECD_DT','Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_RECD_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_RECD_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_ACPT_DTM_MEPE_PLAN_ENTRY_DT',
+
+ 
+
+    'CLCL_TOT_CHG','CLCL_TOT_PAYABLE','CLCL_ME_AGE','RE','MIPS','adjusted','duration_days','duration_days_dos',
+
+    'BLANK_EOB_EXCD_ROWS','TOTAL_ROWS','BLANK_PREAUTH_ROWS','MOD2_NON_BLANK_COUNT',
+
+       'MOD3_NON_BLANK_COUNT', 'MOD4_NON_BLANK_COUNT',
+
+       'TOTAL_NON_BLANK_COUNT','embedding_0',
+
+'embedding_1',
+
+'embedding_2',
+
+'embedding_3',
+
+'embedding_4',
+
+'embedding_5',
+
+'embedding_6',
+
+'embedding_7',
+
+'embedding_8',
+
+'embedding_9',
+
+'embedding_10',
+
+ 
+
+'embedding_claim_0',
+
+'embedding_claim_1',
+
+'embedding_claim_2',
+
+'embedding_claim_3',
+
+'embedding_claim_4',
+
+'embedding_claim_5',
+
+'embedding_claim_6',
+
+'embedding_claim_7',
+
+'embedding_claim_8',
+
+'embedding_claim_9',
+
+'embedding_claim_10',
+
+ 
+
+'embedding_status_0',
+
+'embedding_status_1',
+
+'embedding_status_2',
+
+'embedding_status_3',
+
+'embedding_status_4',
+
+'embedding_status_5',
+
+'embedding_status_6',
+
+'embedding_status_7',
+
+'embedding_status_8',
+
+'embedding_status_9',
+
+'embedding_status_10',
+
+'embedding_agag_0',
+
+'embedding_agag_1',
+
+'embedding_agag_2',
+
+'embedding_agag_3',
+
+'embedding_agag_4',
+
+'embedding_agag_5',
+
+'embedding_agag_6',
+
+'embedding_agag_7',
+
+'embedding_agag_8',
+
+'embedding_agag_9',
+
+'embedding_agag_10'
+
+ 
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+]
+
+ 
+
+cont_cols = [
+
+ 
+
+    'Diff_CLCL_INPUT_DT_CLCL_RECD_DT','Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_RECD_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_RECD_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_ACPT_DTM_MEPE_PLAN_ENTRY_DT'
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+]
+
+ 
+
+ 
+
+ 
+
+# In[143]:
+
+ 
+
+ 
+
+id_cols = ['CLAIM_ID']
+
+ 
+
+ 
+
+# In[144]:
+
+ 
+
+ 
+
+overall_train.shape
+
+ 
+
+ 
+
+# In[145]:
+
+ 
+
+ 
+
+train_df.shape
+
+ 
+
+ 
+
+# In[146]:
+
+ 
+
+ 
+
+overall_train['Error_Cat'] .sum()
+
+ 
+
+ 
+
+# In[147]:
+
+ 
+
+ 
+
+y_train = overall_train['Error_Cat'].values
+
+ 
+
+ 
+
+# In[148]:
+
+ 
+
+ 
+
+y_train.sum()
+
+ 
+
+ 
+
+# In[149]:
+
+ 
+
+ 
+
+X_train = overall_train.drop(columns=['Error_Cat'], errors='ignore')
+
+ 
+
+ 
+
+# In[150]:
+
+ 
+
+ 
+
+encoding_maps = {}
+
+ 
+
+global_mean = y_train.mean()
+
+ 
+
+ 
+
+# In[151]:
+
+ 
+
+ 
+
+type(y_train)
+
+ 
+
+ 
+
+# In[152]:
+
+ 
+
+ 
+
+if not isinstance(y_train, pd.Series):
+
+ 
+
+    y_train = pd.Series(y_train, index=X_train.index, name='Error_Cat')
+
+ 
+
+ 
+
+# In[153]:
+
+ 
+
+ 
+
+for col in cat_cols:
+
+ 
+
+    agg = X_train.join(y_train).groupby(col)['Error_Cat'].agg(['count','sum'])
+
+ 
+
+    agg['rate'] = agg['sum'] / agg['count']
+
+ 
+
+ 
+
+ 
+
+    freq_map = agg['count'].to_dict()
+
+ 
+
+    sum_map  = agg['sum'].to_dict()
+
+ 
+
+    rate_map = agg['rate'].to_dict()
+
+ 
+
+ 
+
+ 
+
+    encoding_maps[col] = {
+
+ 
+
+        'freq_map': freq_map,
+
+ 
+
+        'sum_map': sum_map,
+
+ 
+
+        'rate_map': rate_map
+
+ 
+
+    }
+
+ 
+
+ 
+
+ 
+
+    X_train[col + '_freq'] = X_train[col].map(freq_map)
+
+ 
+
+    X_train[col + '_sum']  = X_train[col].map(sum_map)
+
+ 
+
+    X_train[col + '_rate'] = X_train[col].map(rate_map)
+
+ 
+
+ 
+
+ 
+
+    X_train[col + '_freq'].fillna(0, inplace=True)
+
+ 
+
+    X_train[col + '_sum'].fillna(0, inplace=True)
+
+ 
+
+    X_train[col + '_rate'].fillna(global_mean, inplace=True)
+
+ 
+
+ 
+
+ 
+
+# In[154]:
+
+ 
+
+ 
+
+X_train_enc = X_train.drop(columns=cat_cols + id_cols, errors='ignore')
+
+ 
+
+ 
+
+# In[155]:
+
+ 
+
+ 
+
+for c in cont_cols:
+
+ 
+
+    if c not in X_train_enc.columns and c in X_train.columns:
+
+ 
+
+        X_train_enc[c] = X_train[c]
+
+ 
+
+ 
+
+# In[156]:
+
+ 
+
+ 
+
+# Example: simple GridSearch
+
+ 
+
+param_grid = {
+
+ 
+
+    'n_estimators': [200],
+
+ 
+
+    'max_depth': [15],
+
+ 
+
+    'max_features': ['sqrt'],
+
+ 
+
+    'min_samples_leaf': [10]
+
+ 
+
+}
+
+ 
+
+ 
+
+# In[157]:
+
+ 
+
+ 
+
+rf_base = RandomForestClassifier(random_state=42)
+
+ 
+
+cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=42)
+
+ 
+
+grid_search = GridSearchCV(
+
+ 
+
+    estimator=rf_base,
+
+ 
+
+    param_grid=param_grid,
+
+ 
+
+    scoring='roc_auc',
+
+ 
+
+    cv=cv,
+
+ 
+
+    n_jobs=-1,
+
+ 
+
+    verbose=1,
+
+ 
+
+    refit=True
+
+ 
+
+)
+
+ 
+
+grid_search.fit(X_train_enc, y_train)
+
+ 
+
+ 
+
+ 
+
+best_rf_model = grid_search.best_estimator_
+
+ 
+
+print("Best params:", grid_search.best_params_)
+
+ 
+
+print("Best CV AUC:", grid_search.best_score_)
+
+ 
+
+ 
+
+ 
+
+# Find best threshold (Youden's J)
+
+ 
+
+y_train_proba = best_rf_model.predict_proba(X_train_enc)[:, 1]
+
+ 
+
+fpr, tpr, thresh = roc_curve(y_train, y_train_proba)
+
+ 
+
+youden_j = tpr - fpr
+
+ 
+
+idx = np.argmax(youden_j)
+
+ 
+
+best_thresh = thresh[idx]
+
+ 
+
+print("Optimal threshold:", best_thresh)
+
+ 
+
+ 
+
+ 
+
+# Evaluate on train & test
+
+ 
+
+y_train_pred = (y_train_proba >= best_thresh).astype(int)
+
+ 
+
+ 
+
+# In[158]:
+
+ 
+
+ 
+
+X_train_enc.shape
+
+ 
+
+ 
+
+# In[159]:
+
+ 
+
+ 
+
+overall_train1['RF1_Score'] = y_train_proba
+
+ 
+
+ 
+
+# In[160]:
+
+ 
+
+ 
+
+overall_train1['RF1_Pred']  = y_train_pred
+
+ 
+
+ 
+
+# In[161]:
+
+ 
+
+ 
+
+auc_train = roc_auc_score(y_train, y_train_proba)
+
+ 
+
+ 
+
+# In[162]:
+
+ 
+
+ 
+
+print("Train AUC:", auc_train)
+
+ 
+
+ 
+
+# In[163]:
+
+ 
+
+ 
+
+X_train_enc.shape
+
+ 
+
+ 
+
+# In[164]:
+
+ 
+
+ 
+
+X_train_enc.to_excel("dep.xlsx")
+
+ 
+
+ 
+
+# In[165]:
+
+ 
+
+ 
+
+y_train.to_excel("y_train.xlsx")
+
+ 
+
+ 
+
+# In[166]:
+
+ 
+
+ 
+
+os.getcwd()
+
+ 
+
+ 
+
+# In[167]:
+
+ 
+
+ 
+
+y_train.sum()
+
+ 
+
+ 
+
+# In[168]:
+
+ 
+
+ 
+
+# Get feature importances from the trained RandomForest model
+
+ 
+
+feature_importances = best_rf_model.feature_importances_
+
+ 
+
+ 
+
+ 
+
+# Get corresponding feature names from the training data
+
+ 
+
+feature_names = X_train_enc.columns
+
+ 
+
+ 
+
+ 
+
+# Create a DataFrame of feature names and their importances
+
+ 
+
+importance_df = pd.DataFrame({
+
+ 
+
+    'Feature': feature_names,
+
+ 
+
+    'Importance': feature_importances
+
+ 
+
+})
+
+ 
+
+ 
+
+ 
+
+# Sort by importance (descending)
+
+ 
+
+importance_df = importance_df.sort_values(by='Importance', ascending=False)
+
+ 
+
+ 
+
+ 
+
+# Display top 30 features
+
+ 
+
+print("Top 30 Important Features:")
+
+ 
+
+print(importance_df.head(30))
+
+ 
+
+ 
+
+ 
+
+# Optionally, save to Excel
+
+ 
+
+importance_df.to_excel("Top_Feature_Importances.xlsx", index=False)
+
+ 
+
+
+ 
+
+ 
+
+# In[169]:
+
+ 
+
+ 
+
+# Create a DataFrame with prediction probabilities and actual labels
+
+ 
+
+decile_df = pd.DataFrame({
+
+ 
+
+    'CLAIM_ID': overall_train1['CLAIM_ID'],
+
+ 
+
+    'Pred_Prob': y_train_proba,
+
+ 
+
+    'Actual': y_train
+
+ 
+
+})
+
+ 
+
+ 
+
+ 
+
+# Assign deciles: 1 = highest probability, 10 = lowest
+
+ 
+
+decile_df['Decile'] = pd.qcut(decile_df['Pred_Prob'], 10, labels=False, duplicates='drop') + 1
+
+ 
+
+decile_df['Decile'] = 11 - decile_df['Decile']  # Reverse so that Decile 1 = highest risk
+
+ 
+
+ 
+
+ 
+
+# Group by decile and calculate metrics
+
+ 
+
+decile_table = decile_df.groupby('Decile').agg(
+
+ 
+
+    Total_Claims=('CLAIM_ID', 'count'),
+
+ 
+
+    Events=('Actual', 'sum'),
+
+ 
+
+    Non_Events=('Actual', lambda x: (x == 0).sum()),
+
+ 
+
+    Avg_Pred_Prob=('Pred_Prob', 'mean')
+
+ 
+
+).reset_index()
+
+ 
+
+ 
+
+ 
+
+# Add Event Rate
+
+ 
+
+decile_table['Event_Rate_%'] = (decile_table['Events'] / decile_table['Total_Claims']) * 100
+
+ 
+
+ 
+
+ 
+
+# Sort by decile
+
+ 
+
+decile_table = decile_table.sort_values(by='Decile')
+
+ 
+
+ 
+
+ 
+
+# Display the decile table
+
+ 
+
+print("\nDecile Table:")
+
+ 
+
+print(decile_table)
+
+ 
+
+ 
+
+ 
+
+# Optionally export
+
+ 
+
+decile_table.to_excel("Decile_Table_RF1.xlsx", index=False)
+
+ 
+
+
+ 
+
+ 
+
+# In[170]:
+
+ 
+
+ 
+
+X_train_enc.columns
+
+ 
+
+ 
+
+# In[171]:
+
+ 
+
+ 
+
+with open('random_forest_error_cat_best.pkl', 'wb') as f:
+
+ 
+
+    pickle.dump(best_rf_model, f)
+
+ 
+
+ 
+
+# In[172]:
+
+ 
+
+ 
+
+with open('target_encoding_maps.pkl', 'wb') as f:
+
+ 
+
+    pickle.dump(encoding_maps, f)
+
+ 
+
+ 
+
+# In[173]:
+
+ 
+
+ 
+
+extra_info = {
+
+ 
+
+    'best_thresh': best_thresh,
+
+ 
+
+    'global_mean': global_mean
+
+ 
+
+}
+
+ 
+
+ 
+
+# In[174]:
+
+ 
+
+ 
+
+with open('extra_info.pkl', 'wb') as f:
+
+ 
+
+    pickle.dump(extra_info, f)
+
+ 
+
+ 
+
+ 
+
+print("Model, encoding maps, and extra_info saved to .pkl files.")
+
+ 
+
+ 
+
+# In[175]:
+
+ 
+
+ 
+
+overall_train1["Data"]="Train"
+
+ 
+
+ 
+
+# In[176]:
+
+ 
+
+ 
+
+overall_train2=overall_train1.copy()
+
+ 
+
+ 
+
+# In[177]:
+
+ 
+
+ 
+
+model_df=test_df.copy()
+
+ 
+
+ 
+
+# In[178]:
+
+ 
+
+ 
+
+model_df1=model_df.copy()
+
+ 
+
+ 
+
+# In[179]:
+
+ 
+
+ 
+
+model_df111=model_df1.copy()
+
+ 
+
+ 
+
+# In[180]:
+
+ 
+
+ 
+
+model_df112=test_df.copy()
+
+ 
+
+ 
+
+# In[181]:
+
+ 
+
+ 
+
+model_df.shape
+
+ 
+
+ 
+
+# In[182]:
+
+ 
+
+ 
+
+overall_train1.shape
+
+ 
+
+ 
+
+# In[183]:
+
+ 
+
+ 
+
+result_data.shape
+
+ 
+
+ 
+
+# In[184]:
+
+ 
+
+ 
+
+result_mips.shape
+
+ 
+
+ 
+
+# In[185]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+conn = pyodbc.connect(f'DRIVER={{SQL Server}};SERVER={server};DATABASE={db};Trusted_Connection=yes')
+
+ 
+
+ 
+
+# In[28]:
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLCL_CLAIM]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+# In[29]:
+
+ 
+
+ 
+
+print("Claim-level shape (training):", result_data.shape)
+
+ 
+
+ 
+
+ 
+
+result_data.rename(columns={"CLCL_ID":"CLAIM_ID"}, inplace=True)
+
+ 
+
+# Merge into training data
+
+ 
+
+training_merged = pd.merge(model_df, result_data, on="CLAIM_ID", how="left").drop_duplicates()
+
+ 
+
+print("After merge training_merged shape:", training_merged.shape)
+
+ 
+
+ 
+
+ 
+
+# --------------------------------------------------------------------------------
+
+ 
+
+# 5) FEATURE ENGINEERING for training
+
+ 
+
+# --------------------------------------------------------------------------------
+
+ 
+
+# Example: drop certain columns with single values or columns not needed
+
+ 
+
+cols_to_drop = [
+
+ 
+
+    "CLCL_CUR_STS","CLST_SEQ_NO","CLCL_LAST_ACT_DTM","CLCL_PAID_DT","CLCL_NEXT_REV_DT",
+
+ 
+
+    "CLCL_LOW_SVC_DT","CLCL_HIGH_SVC_DT","CLCL_ACD_DT","CLCL_CURR_ILL_DT","CLCL_SIMI_ILL_DT",
+
+ 
+
+    "CLCL_DRAG_DT","CLCL_EOB_EXCD_ID","CLCL_BATCH_ID","CLCL_BATCH_ACTION","CLCL_CE_IND",
+
+ 
+
+    "PDDS_MCTR_BCAT","CLCL_MICRO_ID","CLCL_RELHP_FROM_DT","CLCL_RELHP_TO_DT","USUS_ID",
+
+ 
+
+    "CLCL_LOCK_TOKEN","ATXR_SOURCE_ID","PCBC_ID_NVL"
+
+ 
+
+]
+
+ 
+
+df_filtered = training_merged.drop(columns=cols_to_drop, errors='ignore')
+
+ 
+
+ 
+
+ 
+
+# Convert date columns & compute differences
+
+ 
+
+date_cols = ["CLCL_INPUT_DT","CLCL_RECD_DT","CLCL_ACPT_DTM","MEPE_PLAN_ENTRY_DT"]
+
+ 
+
+for dc in date_cols:
+
+ 
+
+    if dc in df_filtered.columns:
+
+ 
+
+        df_filtered[dc] = pd.to_datetime(df_filtered[dc], errors='coerce')
+
+ 
+
+ 
+
+ 
+
+for c1, c2 in combinations(date_cols, 2):
+
+ 
+
+    if c1 in df_filtered.columns and c2 in df_filtered.columns:
+
+ 
+
+        diff_col = f"Diff_{c1}_{c2}"
+
+ 
+
+        df_filtered[diff_col] = (df_filtered[c2] - df_filtered[c1]).dt.days
+
+ 
+
+ 
+
+ 
+
+df_filtered = df_filtered.drop(columns=date_cols, errors='ignore')
+
+ 
+
+ 
+
+ 
+
+# We'll define the "overalldata" as everything except we keep 'CLAIM_ID','Error_Type','QC_Date','Error_Cat'
+
+ 
+
+# for train/test splitting. Then we remove them from actual training features.
+
+ 
+
+keep_cols = ['CLAIM_ID','Error_Type','QC_Date','Error_Cat']
+
+ 
+
+overalldata = df_filtered[keep_cols].copy()
+
+ 
+
+training_merged1=training_merged.drop_duplicates(subset="CLAIM_ID",keep="first")
+
+ 
+
+ 
+
+# In[30]:
+
+ 
+
+ 
+
+#MIPS Addition
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_EOB_EXCD
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+result=result_data.groupby('CLCL_ID',as_index=False).agg({'CDML_EOB_EXCD':lambda x:' ,'.join(x)})
+
+result['MIPS']=result['CDML_EOB_EXCD'].apply(lambda x:1 if '4AA' in x.split(',') else 0)
+
+result_rows=result[result['MIPS']==1]
+
+result=result[['CLCL_ID','MIPS']]
+
+result_mips=result.copy()
+
+df_filtered=pd.merge(df_filtered,result_mips,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[31]:
+
+ 
+
+ 
+
+#Rendering Providr addition
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CLPE_PRPR_TYPE
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLPE_PROV_DATA]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+result=result_data.groupby('CLCL_ID',as_index=False).agg({'CLPE_PRPR_TYPE':lambda x:' ,'.join(x)})
+
+result['RE']=result['CLPE_PRPR_TYPE'].apply(lambda x:1 if 'RE ' in x.split(',') else 0)
+
+result_rows=result[result['RE']==1]
+
+result=result[['CLCL_ID','RE']]
+
+result_RE=result.copy()
+
+df_filtered=pd.merge(df_filtered,result_RE,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[32]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+model_df.head(1)
+
+model_df["adjusted"]=model_df["CLAIM_ID"].astype(str).str.endswith('00').astype(int)
+
+model_df['adjusted'].sum()
+
+result=model_df[['CLAIM_ID','adjusted']]
+
+result.shape
+
+ 
+
+ 
+
+# In[33]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,result,left_on="CLAIM_ID",right_on="CLAIM_ID",how="left")
+
+ 
+
+ 
+
+# In[34]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop_duplicates()
+
+ 
+
+ 
+
+# In[35]:
+
+ 
+
+ 
+
+#service date -recieveddate
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_FROM_DT,CDML_TO_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+lineleveldata=result_data.copy()
+
+# Convert date columns to datetime type
+
+ 
+
+lineleveldata['CDML_FROM_DT'] = pd.to_datetime(lineleveldata['CDML_FROM_DT'])
+
+ 
+
+lineleveldata['CDML_TO_DT'] = pd.to_datetime(lineleveldata['CDML_TO_DT'])
+
+ 
+
+ 
+
+ 
+
+# Group by clcl_id and get min start date and max end date
+
+ 
+
+result = lineleveldata.groupby('CLCL_ID').agg(
+
+ 
+
+    min_start_date=('CDML_FROM_DT', 'min'),
+
+ 
+
+    max_end_date=('CDML_TO_DT', 'max')
+
+ 
+
+).reset_index()
+
+ 
+
+ 
+
+ 
+
+print(result)
+
+ 
+
+result.shape
+
+ 
+
+ 
+
+# In[36]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CLCL_RECD_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLCL_CLAIM]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+overalldata1=result_data.copy()
+
+# Convert date columns to datetime type
+
+overalldata1['CLCL_RECD_DT'] = pd.to_datetime(overalldata1['CLCL_RECD_DT'])
+
+overalldata1=pd.merge(overalldata1,result,on="CLCL_ID",how="left")
+
+overalldata1["duration_days"]=(overalldata1["CLCL_RECD_DT"]-overalldata1["max_end_date"]).dt.days
+
+overalldata1["duration_days_dos"]=(overalldata1["max_end_date"]-overalldata1["min_start_date"]).dt.days
+
+ 
+
+overalldata1=overalldata1[["CLCL_ID","duration_days","duration_days_dos"]]
+
+ 
+
+ 
+
+# In[37]:
+
+ 
+
+ 
+
+overalldata1=overalldata1.drop_duplicates()
+
+ 
+
+ 
+
+# In[38]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,overalldata1,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[39]:
+
+ 
+
+ 
+
+#TOTAL no of lines and no of lines EOB ATTACHED
+
+#service date -recieveddate
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_EOB_EXCD,CDML_SEQ_NO,CDML_PRE_AUTH_IND
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[40]:
+
+ 
+
+ 
+
+summary = result_data.groupby('CLCL_ID').agg(
+
+ 
+
+    TOTAL_ROWS=('CDML_SEQ_NO', 'count'),
+
+ 
+
+    BLANK_EOB_EXCD_ROWS=('CDML_EOB_EXCD', lambda x: x.isna().sum() + (x == '').sum()),
+
+    BLANK_PREAUTH_ROWS=('CDML_PRE_AUTH_IND', lambda x: x.isna().sum() + (x == '').sum())
+
+   
+
+    
+
+ 
+
+).reset_index()
+
+ 
+
+ 
+
+# In[41]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x','CLCL_ID_y','CLCL_ID'])
+
+ 
+
+ 
+
+# In[42]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,summary,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[43]:
+
+ 
+
+ 
+
+overalldata1=overalldata.copy()
+
+model_df=overalldata.copy()
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_IPCD_MOD2,CDML_IPCD_MOD3,CDML_IPCD_MOD4
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# Assuming result_data is your DataFrame
+
+ 
+
+modifier_cols = ["CDML_IPCD_MOD2", "CDML_IPCD_MOD3", "CDML_IPCD_MOD4"]
+
+ 
+
+ 
+
+ 
+
+# Replace blank strings or whitespace with None
+
+ 
+
+result_data[modifier_cols] = result_data[modifier_cols].replace(r'^\s*$', None, regex=True)
+
+ 
+
+ 
+
+ 
+
+# Group by CLCL_ID and count non-blank cells for each modifier
+
+ 
+
+grouped = result_data.groupby("CLCL_ID")[modifier_cols].apply(lambda g: g.notna().sum()).reset_index()
+
+ 
+
+ 
+
+ 
+
+# Rename columns for clarity
+
+ 
+
+grouped.columns = ["CLCL_ID", "MOD2_NON_BLANK_COUNT", "MOD3_NON_BLANK_COUNT", "MOD4_NON_BLANK_COUNT"]
+
+ 
+
+ 
+
+ 
+
+# Calculate total non-blank count across all modifiers
+
+ 
+
+grouped["TOTAL_NON_BLANK_COUNT"] = (
+
+ 
+
+    grouped["MOD2_NON_BLANK_COUNT"] +
+
+ 
+
+    grouped["MOD3_NON_BLANK_COUNT"] +
+
+ 
+
+    grouped["MOD4_NON_BLANK_COUNT"]
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Final output
+
+ 
+
+print(grouped)
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+ 
+
+# In[44]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,grouped,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[45]:
+
+ 
+
+ 
+
+#ADD TEXTUAL DATA
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[46]:
+
+ 
+
+ 
+
+cl_line_level=result_data.copy()
+
+ 
+
+ 
+
+# In[47]:
+
+ 
+
+ 
+
+cl_line_level.IPCD_ID=cl_line_level.IPCD_ID.str.strip()
+
+all_ipcd_det=cl_line_level.IPCD_ID.unique()
+
+all_ipcd_1=pd.DataFrame(all_ipcd_det)
+
+all_ipcd_1.rename(columns={0:'IPCD'},inplace=True)
+
+all_ipcd_1=all_ipcd_1[all_ipcd_1['IPCD'].str.strip()!='']
+
+all_ipcd_1=all_ipcd_1.sort_values(by="IPCD")
+
+all_ipcd_1
+
+ 
+
+ 
+
+# In[48]:
+
+ 
+
+ 
+
+#Extract IPCD Details
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server +
+
+                      ';DATABASE=' + db +
+
+                      ';Trusted_Connection=yes')
+
+ 
+
+ 
+
+batch_size = 1000
+
+total_records = len(all_ipcd_1)
+
+start_index = 0
+
+ 
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+while start_index < total_records:
+
+    end_index = min(start_index + batch_size, total_records)
+
+    batch_claim_ids = all_ipcd_1['IPCD'].iloc[start_index:end_index].astype(str).tolist()
+
+ 
+
+    sql = f"""
+
+        SELECT *
+
+        FROM [jhhcreport].[dbo].[CMC_IPCD_PROC_CD]
+
+        WHERE IPCD_ID IN ({', '.join(['?']*len(batch_claim_ids))})
+
+    """
+
+ 
+
+    batch_data_frame = pd.read_sql(sql, conn, params=batch_claim_ids)
+
+ 
+
+    result_data = pd.concat([result_data, batch_data_frame])
+
+ 
+
+ 
+
+ 
+
+ 
+
+    start_index = end_index
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[49]:
+
+ 
+
+ 
+
+IPCD_details=result_data.copy()
+
+ 
+
+ 
+
+# In[50]:
+
+ 
+
+ 
+
+cl_line_level.IDCD_ID=cl_line_level.IDCD_ID.str.strip()
+
+all_idcd_det=cl_line_level.IDCD_ID.unique()
+
+all_idcd_1=pd.DataFrame(all_idcd_det)
+
+all_idcd_1.rename(columns={0:'IDCD'},inplace=True)
+
+all_idcd_1=all_idcd_1[all_idcd_1['IDCD'].str.strip()!='']
+
+all_idcd_1=all_idcd_1.sort_values(by="IDCD")
+
+#Extract claim overall data
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER=' + server +
+
+                      ';DATABASE=' + db +
+
+                      ';Trusted_Connection=yes')
+
+ 
+
+ 
+
+batch_size = 1000
+
+total_records = len(all_idcd_1)
+
+start_index = 0
+
+ 
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+while start_index < total_records:
+
+    end_index = min(start_index + batch_size, total_records)
+
+    batch_claim_ids = all_idcd_1['IDCD'].iloc[start_index:end_index].astype(str).tolist()
+
+ 
+
+    sql = f"""
+
+        SELECT *
+
+        FROM [jhhcreport].[dbo].[CMC_IDCD_DIAG_CD]
+
+        WHERE IDCD_ID IN ({', '.join(['?']*len(batch_claim_ids))})
+
+    """
+
+ 
+
+    batch_data_frame = pd.read_sql(sql, conn, params=batch_claim_ids)
+
+ 
+
+    result_data = pd.concat([result_data, batch_data_frame])
+
+ 
+
+ 
+
+ 
+
+ 
+
+    start_index = end_index
+
+ 
+
+conn.close()
+
+ 
+
+print(result_data.shape)
+
+IDCD_details=result_data.copy()
+
+ 
+
+ 
+
+# In[51]:
+
+ 
+
+ 
+
+mdl1=cl_line_level[["CLCL_ID","CDML_SEQ_NO","IPCD_ID","IDCD_ID"]]
+
+mdl1.IDCD_ID=mdl1.IDCD_ID.str.strip()
+
+mdl1.IPCD_ID=mdl1.IPCD_ID.str.strip()
+
+IDCD_details.IDCD_ID=IDCD_details.IDCD_ID.str.strip()
+
+IDCD_details.IDCD_DESC=IDCD_details.IDCD_DESC.str.strip()
+
+IDCD_details1=IDCD_details[["IDCD_ID","IDCD_DESC"]]
+
+IDCD_details2=IDCD_details1[IDCD_details1['IDCD_DESC']!='Invalid Diagnosis Code']
+
+IDCD_details3=IDCD_details2.drop_duplicates()
+
+IDCD_details4=IDCD_details3[~IDCD_details3["IDCD_DESC"].str.contains('Invalid',na=False)]
+
+combined_texts = IDCD_details4.groupby('IDCD_ID')['IDCD_DESC'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC')
+
+IDCD_all = pd.merge(IDCD_details4, combined_texts, on='IDCD_ID', how='left')
+
+IDCD_all=IDCD_all[["IDCD_ID","Combined_DESC"]]
+
+IDCD_all.rename(columns={"Combined_DESC":'Combined_DESC_IDCD'},inplace=True)                                                                      
+
+IDCD_all=IDCD_all.drop_duplicates()
+
+IDCD_all=IDCD_all[IDCD_all['Combined_DESC_IDCD'].str.strip()!='']
+
+IDCD_all['Combined_DESC_IDCD'].isnull().sum()
+
+IPCD_details.IPCD_ID=IPCD_details.IPCD_ID.str.strip()
+
+IPCD_details.IPCD_DESC=IPCD_details.IPCD_DESC.str.strip()
+
+IPCD_details1=IPCD_details[["IPCD_ID","IPCD_DESC"]]
+
+IPCD_details2=IPCD_details1[IPCD_details1['IPCD_DESC']!='Invalid Diagnosis Code']
+
+IPCD_details3=IPCD_details2.drop_duplicates()
+
+IPCD_details4=IPCD_details3[~IPCD_details3["IPCD_DESC"].str.contains('Invalid',na=False)]
+
+combined_texts = IPCD_details4.groupby('IPCD_ID')['IPCD_DESC'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC')
+
+IPCD_all = pd.merge(IPCD_details4, combined_texts, on='IPCD_ID', how='left')
+
+IPCD_all=IPCD_all[["IPCD_ID","Combined_DESC"]]
+
+IPCD_all.rename(columns={"Combined_DESC":'Combined_DESC_IPCD'},inplace=True)
+
+IPCD_all=IPCD_all.drop_duplicates()
+
+IPCD_all=IPCD_all[IPCD_all['Combined_DESC_IPCD'].str.strip()!='']
+
+IPCD_all['Combined_DESC_IPCD'].isnull().sum()
+
+mdl2=pd.merge(mdl1,IDCD_all,on="IDCD_ID",how="left")
+
+print(mdl1.shape,mdl2.shape)
+
+mdl3=pd.merge(mdl2,IPCD_all,on="IPCD_ID",how="left")
+
+print(mdl2.shape,mdl3.shape)
+
+combined_texts = mdl3.groupby('CLCL_ID')['Combined_DESC_IDCD'].apply(lambda x: ' '.join(map(str,x))).reset_index(name='Combined_DESC_IDCD_all')
+
+mdl4 = pd.merge(mdl3, combined_texts, on='CLCL_ID', how='left')
+
+mdl4['Combined_DESC_IPCD']=mdl4['Combined_DESC_IPCD'].fillna("Not Available")
+
+combined_texts = mdl4.groupby('CLCL_ID')['Combined_DESC_IPCD'].apply(lambda x: ' '.join(x)).reset_index(name='Combined_DESC_IPCD_all')
+
+mdl5 = pd.merge(mdl4, combined_texts, on='CLCL_ID', how='left')
+
+mdl6=mdl5[["CLCL_ID","Combined_DESC_IDCD_all","Combined_DESC_IPCD_all"]]
+
+mdl6=mdl6.drop_duplicates()
+
+ 
+
+ 
+
+# In[52]:
+
+ 
+
+ 
+
+mdl6["consolidated_text"]="Diagnosis :"+mdl6["Combined_DESC_IDCD_all"].astype(str)+"   "+ "Procedure :"+mdl6["Combined_DESC_IPCD_all"]
+
+ 
+
+ 
+
+# In[53]:
+
+ 
+
+ 
+
+mdl7=mdl6.head(3)
+
+ 
+
+ 
+
+# In[54]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = mdl6["consolidated_text"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+df_train_embeddings["CLCL_ID"]=mdl6["CLCL_ID"]
+
+ 
+
+ 
+
+# In[55]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+ 
+
+ 
+
+# In[56]:
+
+ 
+
+ 
+
+tst1 = df_filtered.apply(
+
+ 
+
+    lambda row: (
+
+ 
+
+        f"This claim is for claim type {row['CLCL_CL_TYPE']}  and claim subtype {row['CLCL_CL_SUB_TYPE']} "
+
+ 
+
+        f"and age of person treated is {row['CLCL_ME_AGE']}, with gender being {row['MEME_SEX']}. "
+
+ 
+
+        f"The physician is from network {row['CLCL_NTWK_IND']}. "
+
+ 
+
+        f"The total charged amount is {row['CLCL_TOT_CHG']}, and the input method for the claim is {row['CLCL_INPUT_METH']}. "
+
+ 
+
+        f"It took {row['Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM']} days to accept the claim post input in the system. "
+
+ 
+
+        f"{row['Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT']} days passed between plan entry and claim input. "
+
+ 
+
+        f"The difference between claim received and accepted date is {row['Diff_CLCL_RECD_DT_CLCL_ACPT_DTM']} days."
+
+ 
+
+        f"This is claim is adjusted or non adjusted we indicate 1 if adjusted for this claim this value is {row['adjusted']}"
+
+        f"The total number of rows in claim line level is {row['TOTAL_ROWS']} and in line level data blank EOB;s are {row['BLANK_EOB_EXCD_ROWS']}"
+
+ 
+
+ 
+
+    ),
+
+ 
+
+    axis=1
+
+ 
+
+)
+
+ 
+
+ 
+
+df_filtered["Claim_Details"]=tst1
+
+df_filtered1=df_filtered[["CLAIM_ID","Claim_Details"]]
+
+ 
+
+ 
+
+# In[57]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = df_filtered1["Claim_Details"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_claim_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+df_train_embeddings["CLCL_ID"]=df_filtered1["CLAIM_ID"]
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_y'])
+
+model_df=df_filtered.copy()
+
+ 
+
+ 
+
+# In[58]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLAIM_ID"] = model_df["CLAIM_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLAIM_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CLST_STATUS]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+ 
+
+ 
+
+# In[59]:
+
+ 
+
+ 
+
+result_data=result_data.sort_values(by=['CLCL_ID','CLST_STS_DTM'],ascending=[True,True])
+
+model_df1=model_df[["CLAIM_ID","QC_Date"]]
+
+ 
+
+ 
+
+# In[60]:
+
+ 
+
+ 
+
+model_df1['QC_Date'] = pd.to_datetime(model_df1['QC_Date'])
+
+ 
+
+result_data['CLST_STS_DTM'] = pd.to_datetime(result_data['CLST_STS_DTM'], format='%Y-%m-%d %H:%M:%S:%f', errors='coerce')
+
+ 
+
+ 
+
+ 
+
+# Perform left join: model_df1 LEFT JOIN result_data ON CLCL_ID == CLAIM_ID
+
+ 
+
+merged_df = pd.merge(
+
+ 
+
+    result_data,
+
+ 
+
+    model_df1,
+
+ 
+
+    left_on='CLCL_ID',
+
+ 
+
+    right_on='CLAIM_ID',
+
+ 
+
+    how='left'
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Filter rows where CLST_STS_DTM < QC_date
+
+ 
+
+model_df2 = merged_df[merged_df['CLST_STS_DTM'] < merged_df['QC_Date']]
+
+ 
+
+
+ 
+
+ 
+
+# In[61]:
+
+ 
+
+ 
+
+# Function to build status description per claim
+
+ 
+
+def build_status_description(group):
+
+ 
+
+    descriptions = []
+
+ 
+
+    for i, row in enumerate(group.itertuples(), start=1):
+
+ 
+
+        if i == 1:
+
+ 
+
+            descriptions.append(f"This claim was processed by {row.USUS_ID} and changed to status {row.CLST_STS}")
+
+ 
+
+        else:
+
+ 
+
+            descriptions.append(f"then processed by {row.USUS_ID} and changed to status {row.CLST_STS}")
+
+ 
+
+    return ', '.join(descriptions) + '.'
+
+ 
+
+ 
+
+ 
+
+# Apply the function to each group of CLCL_ID
+
+ 
+
+result_df = model_df2.groupby('CLCL_ID').apply(build_status_description).reset_index()
+
+ 
+
+result_df.columns = ['CLCL_ID', 'STATUS_DESCRIPTION']
+
+ 
+
+ 
+
+ 
+
+# Show the result
+
+ 
+
+print(result_df)
+
+ 
+
+
+ 
+
+ 
+
+# In[62]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,result_df,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[63]:
+
+ 
+
+ 
+
+df_filtered1=df_filtered.copy()
+
+ 
+
+ 
+
+# In[64]:
+
+ 
+
+ 
+
+df_filtered1["STATUS_DESCRIPTION"]=df_filtered1["STATUS_DESCRIPTION"].astype(str)
+
+ 
+
+ 
+
+# In[65]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = df_filtered1["STATUS_DESCRIPTION"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+ 
+
+ 
+
+# In[66]:
+
+ 
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_status_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+ 
+
+df_train_embeddings["CLCL_ID"]=df_filtered1["CLAIM_ID"]
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="CLAIM_ID",right_on="CLCL_ID", how="left")
+
+ 
+
+ 
+
+# In[67]:
+
+ 
+
+ 
+
+df_filtered=df_filtered.drop(columns=['CLCL_ID_y'])
+
+ 
+
+ 
+
+# In[68]:
+
+ 
+
+ 
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+ 
+
+ 
+
+# In[69]:
+
+ 
+
+ 
+
+allcolsdata.to_excel("allcols.xlsx")
+
+ 
+
+ 
+
+# In[70]:
+
+ 
+
+ 
+
+model_df=df_filtered[["CLAIM_ID","AGAG_ID"]]
+
+ 
+
+ 
+
+# In[71]:
+
+ 
+
+ 
+
+model_df=model_df.rename(columns={'CLAIM_ID':'CLCL_ID'})
+
+ 
+
+ 
+
+# In[72]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["CLCL_ID"] = model_df["CLCL_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["CLCL_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT CLCL_ID,CDML_FROM_DT,CDML_TO_DT
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_CDML_CL_LINE]
+
+ 
+
+        WHERE CLCL_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+linedata=result_data.copy()
+
+ 
+
+ 
+
+# In[73]:
+
+ 
+
+ 
+
+server = 'PRODRPTV31.tmghealth.com'
+
+ 
+
+db = 'jhhcreport'
+
+ 
+
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER='+server+';DATABASE='+db+';Trusted_Connection=yes')
+
+ 
+
+ 
+
+ 
+
+model_df["AGAG_ID"] = model_df["AGAG_ID"].astype(str)
+
+ 
+
+claim_ids_training = model_df["AGAG_ID"].unique().tolist()
+
+ 
+
+ 
+
+ 
+
+batch_size = 1000
+
+ 
+
+start_index = 0
+
+ 
+
+total_records = len(claim_ids_training)
+
+ 
+
+result_data = pd.DataFrame()
+
+ 
+
+ 
+
+ 
+
+while start_index < total_records:
+
+ 
+
+    end_index = min(start_index + batch_size, total_records)
+
+ 
+
+    batch_claims = claim_ids_training[start_index:end_index]
+
+ 
+
+ 
+
+ 
+
+    sql = f"""
+
+ 
+
+        SELECT *
+
+ 
+
+        FROM [jhhcreport].[dbo].[CMC_AGAG_AGREEMENT]
+
+ 
+
+        WHERE AGAG_ID IN ({', '.join(['?'] * len(batch_claims))})
+
+ 
+
+    """
+
+ 
+
+    df_batch = pd.read_sql(sql, conn, params=batch_claims)
+
+ 
+
+    result_data = pd.concat([result_data, df_batch], ignore_index=True)
+
+ 
+
+    start_index = end_index
+
+ 
+
+ 
+
+ 
+
+conn.close()
+
+agagdata=result_data.copy()
+
+linedata['CDML_TO_DT']=pd.to_datetime(linedata['CDML_TO_DT'])
+
+linedata1=linedata.groupby('CLCL_ID',as_index=False)['CDML_TO_DT'].max()
+
+ 
+
+ 
+
+# In[74]:
+
+ 
+
+ 
+
+model_df1=pd.merge(model_df,linedata1,on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[75]:
+
+ 
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# Step 1: Convert AGAG_TERM_DT to string and replace '9999-12-31 00:00:00' with '2026-12-31'
+
+ 
+
+agagdata['AGAG_TERM_DT'] = agagdata['AGAG_TERM_DT'].astype(str).replace('9999-12-31 00:00:00', '2026-12-31')
+
+ 
+
+ 
+
+ 
+
+# Step 2: Safely convert to datetime with mixed formats
+
+ 
+
+agagdata['AGAG_TERM_DT'] = pd.to_datetime(agagdata['AGAG_TERM_DT'], format='mixed')
+
+ 
+
+ 
+
+ 
+
+# Step 3: Convert other date columns
+
+ 
+
+model_df1['CDML_TO_DT']  = pd.to_datetime(model_df1['CDML_TO_DT'], format='mixed')
+
+ 
+
+agagdata['AGAG_EFF_DT']  = pd.to_datetime(agagdata['AGAG_EFF_DT'], format='mixed')
+
+ 
+
+ 
+
+ 
+
+# Step 4: Merge and filter
+
+ 
+
+merged_df = pd.merge(model_df1, agagdata, on='AGAG_ID', how='inner')
+
+ 
+
+ 
+
+ 
+
+filtered_df = merged_df[
+
+ 
+
+    (merged_df['CDML_TO_DT'] > merged_df['AGAG_EFF_DT']) &
+
+ 
+
+    (merged_df['CDML_TO_DT'] < merged_df['AGAG_TERM_DT'])
+
+ 
+
+]
+
+ 
+
+ 
+
+ 
+
+# Output
+
+ 
+
+ 
+
+ 
+
+
+ 
+
+ 
+
+# In[76]:
+
+ 
+
+ 
+
+# Step 1: Count how many times each CLCL_ID appears
+
+ 
+
+counts = filtered_df['CLCL_ID'].value_counts()
+
+ 
+
+ 
+
+ 
+
+# Step 2: Filter only those CLCL_IDs that appear exactly twice
+
+ 
+
+clcl_ids_with_two_rows = counts[counts == 2].index
+
+ 
+
+ 
+
+ 
+
+# Step 3: Filter the original filtered_df for those CLCL_IDs
+
+ 
+
+result_df1 = filtered_df[filtered_df['CLCL_ID'].isin(clcl_ids_with_two_rows)]
+
+ 
+
+ 
+
+ 
+
+# Output
+
+ 
+
+print(result_df1)
+
+ 
+
+ 
+
+# In[77]:
+
+ 
+
+ 
+
+# Define the mapping dictionary
+
+ 
+
+cat_description_map = {
+
+ 
+
+    'D': 'Dental',
+
+ 
+
+    'M': 'Medical',
+
+ 
+
+    'V': 'Vision'
+
+ 
+
+}
+
+ 
+
+ 
+
+ 
+
+# Add a new column AGAG_CAT_description using map
+
+ 
+
+filtered_df['AGAG_CAT_description'] = filtered_df['AGAG_CAT'].map(cat_description_map)
+
+ 
+
+ 
+
+ 
+
+filtered_df.head(3)
+
+ 
+
+ 
+
+# In[78]:
+
+ 
+
+ 
+
+rwh_ind_map = {
+
+ 
+
+    'A': 'Allowable',
+
+ 
+
+    'P': 'Paid'
+
+ 
+
+}
+
+ 
+
+ 
+
+ 
+
+# Add a new column using map and fill missing/None with 'None'
+
+ 
+
+filtered_df['AGAG_RWH_IND_description'] = filtered_df['AGAG_RWH_IND'].map(rwh_ind_map).fillna('None')
+
+filtered_df.head(2)
+
+ 
+
+ 
+
+# In[79]:
+
+ 
+
+ 
+
+ip_price_map = {
+
+ 
+
+    'A': 'DRG Pricing',
+
+ 
+
+    'B': 'Per Diem/Per Case',
+
+ 
+
+    'C': 'Per Case (All Inclusive)',
+
+ 
+
+    'D': 'Per Case (Non Inclusive)',
+
+ 
+
+    'E': 'Ambulatory Payment Classification',
+
+ 
+
+    'G': 'NetworX Pricer/DRG',
+
+ 
+
+    'I': 'All-Inclusive Per Diem',
+
+ 
+
+    'M': 'Multiple Surgery',
+
+ 
+
+    'P': 'R & B Per Diem',
+
+ 
+
+    'S': 'ASC Pricing',
+
+ 
+
+    'W': 'NetworX Pricer',
+
+ 
+
+    'X': 'Per Case/Per Diem/DRG'
+
+ 
+
+}
+
+ 
+
+
+# Apply the mapping and handle missing/null values as 'None'
+
+ 
+
+filtered_df['AGAG_IP_PRICE_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_IP_PRICE_IND'].map(ip_price_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# Optional: check unique mappings
+
+ 
+
+print(filtered_df[['AGAG_IP_PRICE_IND', 'AGAG_IP_PRICE_IND_description']].drop_duplicates())
+
+ 
+
+ 
+
+# In[80]:
+
+ 
+
+ 
+
+op_price_map = {
+
+ 
+
+    'A': 'DRG',
+
+ 
+
+    'B': 'Per Diem/Per Case',
+
+ 
+
+    'C': 'Per Case (All Inclusive)',
+
+ 
+
+    'D': 'Per Case (Non Inclusive)',
+
+ 
+
+    'E': 'Ambulatory Payment Classification',
+
+ 
+
+    'G': 'NetworX Pricer/DRG',
+
+ 
+
+    'I': 'All-Inclusive Per Diem',
+
+ 
+
+    'M': 'Multiple Surgery',
+
+ 
+
+    'P': 'R & B Per Diem',
+
+ 
+
+    'S': 'ASC Pricing',
+
+ 
+
+    'W': 'NetworX Pricer',
+
+ 
+
+    'X': 'Per Case/Per Diem/DRG',
+
+ 
+
+    'Y': 'Ambulatory Patient Groups'
+
+ 
+
+}
+
+ 
+
+
+ 
+
+
+ 
+
+# Add new column for AGAG_OP_PRICE_IND description
+
+ 
+
+filtered_df['AGAG_OP_PRICE_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_OP_PRICE_IND'].map(op_price_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+# In[81]:
+
+ 
+
+ 
+
+ol_ind_map = {
+
+ 
+
+    'C': '(Pay) Charges',
+
+ 
+
+    'D': 'Discount (off charges)',
+
+ 
+
+    'P': 'Per Diem (found on DRG Rules)',
+
+ 
+
+    'R': 'New DRG (found on DRG Rules)'
+
+ 
+
+}
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+# Add new column for AGAG_OL_IND description
+
+ 
+
+filtered_df['AGAG_OL_IND_description'] = (
+
+ 
+
+    filtered_df['AGAG_OL_IND'].map(ol_ind_map).fillna('None')
+
+ 
+
+)
+
+ 
+
+ 
+
+# In[82]:
+
+ 
+
+ 
+
+tst1 = filtered_df.apply(
+
+ 
+
+    lambda row: (
+
+ 
+
+        f"This is about aggrement details aggrement category is  {row['AGAG_CAT_description']} "
+
+        f"and provider aggrement risk withold type  is {row['AGAG_RWH_IND_description']} "
+
+ 
+
+        f"and provider aggrement inpatient pricing type is {row['AGAG_IP_PRICE_IND_description']}, "
+
+        f"  provider aggrement outpatient pricing type {row['AGAG_OP_PRICE_IND_description']}. "
+
+ 
+
+        f"and aggrement outlier indicator is  {row['AGAG_OL_IND_description']}. "
+
+ 
+
+        f"Aggrement description is {row['AGAG_DESC']} "
+
+        f"and aggrement delegated value is  {row['AGAG_DELG_CLAIMS']}.here N denotes No and Y denotes Yes "
+
+ 
+
+        f"and agrrement delegated UM indicator  {row['AGAG_DELG_UM']} here N denotes No and Y denotes Yes "
+
+ 
+
+        f" and prvider aggrement case management indicator is {row['AGAG_DELG_CASE']} here N denotes No and Y denotes Yes "
+
+ 
+
+       
+
+ 
+
+    ),
+
+ 
+
+    axis=1
+
+ 
+
+)
+
+filtered_df["Agreement_desc"]=tst1
+
+ 
+
+ 
+
+# In[83]:
+
+ 
+
+ 
+
+api_key = "93b4bb4ecd114769a7d7e11b9dc01d73"
+
+ 
+
+azure_endpoint = https://sandbox-azure-ai-136.openai.azure.com  # Example
+
+ 
+
+azure_api_version = "2023-05-15"
+
+ 
+
+embedding_model = "sandbox-test-embedding-3-large"
+
+ 
+
+ 
+
+ 
+
+client = AzureOpenAI(
+
+ 
+
+    api_key=api_key,
+
+ 
+
+    api_version=azure_api_version,
+
+ 
+
+    azure_endpoint=azure_endpoint
+
+ 
+
+)
+
+ 
+
+ 
+
+ 
+
+# We'll use the cl100k_base encoding (works well with modern embedding models)
+
+ 
+
+encoder = tiktoken.get_encoding("cl100k_base")
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 2. Helper: Split texts into batches so total tokens < max_tokens
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def chunk_texts_by_token_limit(texts, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    Splits 'texts' into batches where each batch has a total token count
+
+ 
+
+    under 'max_tokens'. Returns a list of batches, each is a list of strings.
+
+ 
+
+    """
+
+ 
+
+    all_batches = []
+
+ 
+
+    current_batch = []
+
+ 
+
+    current_batch_token_count = 0
+
+ 
+
+ 
+
+ 
+
+    for text in texts:
+
+ 
+
+        tokens_count = len(encoder.encode(text))
+
+ 
+
+ 
+
+ 
+
+        if current_batch and (current_batch_token_count + tokens_count) > max_tokens:
+
+ 
+
+            all_batches.append(current_batch)
+
+ 
+
+            current_batch = [text]
+
+ 
+
+            current_batch_token_count = tokens_count
+
+ 
+
+        else:
+
+ 
+
+            current_batch.append(text)
+
+ 
+
+            current_batch_token_count += tokens_count
+
+ 
+
+ 
+
+ 
+
+    if current_batch:
+
+ 
+
+        all_batches.append(current_batch)
+
+ 
+
+ 
+
+ 
+
+    return all_batches
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 3. Main Embedding Function: Batches by tokens, prints batch info
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+def generate_embeddings_dynamic(texts, model=embedding_model, max_tokens=7000):
+
+ 
+
+    """
+
+ 
+
+    1) Splits 'texts' by token limit (max_tokens).
+
+ 
+
+    2) For each batch, calls Azure OpenAI's embedding endpoint once.
+
+ 
+
+    3) Prints a table with batch info.
+
+ 
+
+    4) Returns all embeddings in the original order.
+
+ 
+
+    """
+
+ 
+
+    all_batches = chunk_texts_by_token_limit(texts, max_tokens=max_tokens)
+
+ 
+
+    all_embeddings = []
+
+ 
+
+    batch_info = []
+
+ 
+
+ 
+
+ 
+
+    batch_num = 1
+
+ 
+
+    start_idx = 0
+
+ 
+
+    cumulative_tokens = 0
+
+ 
+
+ 
+
+ 
+
+    for batch in all_batches:
+
+ 
+
+        batch_token_count = sum(len(encoder.encode(t)) for t in batch)
+
+ 
+
+ 
+
+ 
+
+        # Make one API call for this entire batch
+
+ 
+
+        response = client.embeddings.create(
+
+ 
+
+            input=batch,
+
+ 
+
+            model=model
+
+ 
+
+        )
+
+ 
+
+ 
+
+ 
+
+        # Collect embeddings
+
+ 
+
+        batch_embeddings = [r.embedding for r in response.data]
+
+ 
+
+        all_embeddings.extend(batch_embeddings)
+
+ 
+
+ 
+
+ 
+
+        end_idx = start_idx + len(batch) - 1
+
+ 
+
+        cumulative_rows = end_idx + 1
+
+ 
+
+        cumulative_tokens += batch_token_count
+
+ 
+
+ 
+
+ 
+
+        batch_info.append([
+
+ 
+
+            batch_num,
+
+ 
+
+            start_idx,
+
+ 
+
+            end_idx,
+
+ 
+
+            batch_token_count,
+
+ 
+
+            cumulative_rows,
+
+ 
+
+            cumulative_tokens
+
+ 
+
+        ])
+
+ 
+
+ 
+
+ 
+
+        start_idx = end_idx + 1
+
+ 
+
+        batch_num += 1
+
+ 
+
+ 
+
+ 
+
+    df_info = pd.DataFrame(batch_info, columns=[
+
+ 
+
+        "BatchNum", "RowStart", "RowEnd", "BatchTokens",
+
+ 
+
+        "CumulativeRows", "CumulativeTokens"
+
+ 
+
+    ])
+
+ 
+
+ 
+
+ 
+
+    print("\nBatch Details:")
+
+ 
+
+    print(df_info.to_string(index=False))
+
+ 
+
+    print("--------------------------------------------------\n")
+
+ 
+
+ 
+
+ 
+
+    return all_embeddings
+
+ 
+
+ 
+
+ 
+
+##############################################################################
+
+ 
+
+# 4. Generate Embeddings for TRAIN/TEST
+
+ 
+
+##############################################################################
+
+ 
+
+ 
+
+ 
+
+train_diag_texts = filtered_df["Agreement_desc"].tolist()
+
+ 
+
+train_diag_embed = generate_embeddings_dynamic(train_diag_texts, model=embedding_model, max_tokens=7000)
+
+ 
+
+train_diag_embed_np = np.array(train_diag_embed)
+
+ 
+
+X_train_embeddings = np.hstack([train_diag_embed_np])  # (N, embedding_dim)
+
+ 
+
+ 
+
+ 
+
+print("X_train_embeddings shape:", X_train_embeddings.shape)
+
+ 
+
+ 
+
+ 
+
+# In[84]:
+
+ 
+
+ 
+
+# Create a dataframe from the embedding array
+
+ 
+
+df_train_embeddings = pd.DataFrame(
+
+ 
+
+    X_train_embeddings,
+
+ 
+
+    columns=[f"embedding_agag_{i}" for i in range(X_train_embeddings.shape[1])]
+
+ 
+
+)
+
+ 
+
+df_train_embeddings["AGAG_ID"]=filtered_df["AGAG_ID"].values
+
+ 
+
+# df_filtered=df_filtered.drop(columns=['CLCL_ID_x'])
+
+ 
+
+ 
+
+ 
+
+# In[85]:
+
+ 
+
+ 
+
+df_train_embeddings=df_train_embeddings.drop_duplicates(subset="AGAG_ID",keep="first")
+
+ 
+
+ 
+
+# In[86]:
+
+ 
+
+ 
+
+df_filtered=pd.merge(df_filtered,df_train_embeddings,left_on="AGAG_ID",right_on="AGAG_ID", how="left")
+
+ 
+
+ 
+
+# In[87]:
+
+ 
+
+ 
+
+allcolsdata=pd.DataFrame(df_filtered.columns,columns=["column_names"])
+
+allcolsdata.to_excel("allcols.xlsx")
+
+ 
+
+ 
+
+ 
+
+ 
+
+# In[186]:
+
+ 
+
+ 
+
+# In[88]:
+
+ 
+
+ 
+
+#df_filtered=pd.merge(df_filtered,df_dup2,left_on="CLAIM_ID",right_on="CLCL_ID",how="left")
+
+ 
+
+ 
+
+# In[89]:
+
+ 
+
+ 
+
+#df_filtered['Dup_Ind']=df_filtered['Dup_Ind'].fillna(0)
+
+ 
+
+ 
+
+# In[90]:
+
+ 
+
+ 
+
+features_df = df_filtered.drop(columns=['Error_Type','QC_Date','Error_Cat'], errors='ignore')
+
+ 
+
+ 
+
+# In[91]:
+
+ 
+
+ 
+
+final_col_order = [
+
+ 
+
+    'CLAIM_ID',
+
+ 
+
+    'CLCL_CL_SUB_TYPE','CLST_MCTR_REAS','CLCL_ID_ADJ_FROM','PZAP_ID','CSCS_ID',
+
+ 
+
+    'CLCL_ME_AGE','MEME_SEX','NWPR_PFX','PDBC_PFX_NPPR','PDBC_PFX_SEDF','NWNW_ID',
+
+ 
+
+    'AGAG_ID','CLCL_REL_INFO_IND','CLCL_NTWK_IND','CLCL_TOT_CHG','CLCL_TOT_PAYABLE',
+
+ 
+
+    'CLCL_INPUT_METH','CLCL_OUT_LAB_IND',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_CLCL_RECD_DT','Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_RECD_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_RECD_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_ACPT_DTM_MEPE_PLAN_ENTRY_DT','MIPS','RE','adjusted','duration_days','duration_days_dos','TOTAL_ROWS',
+
+    'BLANK_EOB_EXCD_ROWS','BLANK_PREAUTH_ROWS','MOD2_NON_BLANK_COUNT',
+
+       'MOD3_NON_BLANK_COUNT', 'MOD4_NON_BLANK_COUNT',
+
+       'TOTAL_NON_BLANK_COUNT','embedding_0',
+
+'embedding_1',
+
+'embedding_2',
+
+'embedding_3',
+
+'embedding_4',
+
+'embedding_5',
+
+'embedding_6',
+
+'embedding_7',
+
+'embedding_8',
+
+'embedding_9',
+
+'embedding_10',
+
+ 
+
+'embedding_claim_0',
+
+'embedding_claim_1',
+
+'embedding_claim_2',
+
+'embedding_claim_3',
+
+'embedding_claim_4',
+
+'embedding_claim_5',
+
+'embedding_claim_6',
+
+'embedding_claim_7',
+
+'embedding_claim_8',
+
+'embedding_claim_9',
+
+'embedding_claim_10',
+
+ 
+
+'embedding_status_0',
+
+'embedding_status_1',
+
+'embedding_status_2',
+
+'embedding_status_3',
+
+'embedding_status_4',
+
+'embedding_status_5',
+
+'embedding_status_6',
+
+'embedding_status_7',
+
+'embedding_status_8',
+
+'embedding_status_9',
+
+'embedding_status_10',
+
+ 
+
+    'embedding_agag_0',
+
+'embedding_agag_1',
+
+'embedding_agag_2',
+
+'embedding_agag_3',
+
+'embedding_agag_4',
+
+'embedding_agag_5',
+
+'embedding_agag_6',
+
+'embedding_agag_7',
+
+'embedding_agag_8',
+
+'embedding_agag_9',
+
+'embedding_agag_10'
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+ 
+
+]
+
+features_df = features_df[[c for c in final_col_order if c in features_df.columns]]
+
+ 
+
+ 
+
+# In[92]:
+
+ 
+
+ 
+
+filtered_df=filtered_df.rename(columns={'CLCL_ID':'CLAIM_ID'})
+
+ 
+
+ 
+
+# In[93]:
+
+ 
+
+ 
+
+del training_merged
+
+del X_train_embeddings
+
+ 
+
+ 
+
+# In[94]:
+
+ 
+
+ 
+
+model_df.head(1)
+
+ 
+
+ 
+
+# In[95]:
+
+ 
+
+ 
+
+model_df=model_df.rename(columns={'CLCL_ID':'CLAIM_ID'})
+
+ 
+
+ 
+
+# In[96]:
+
+ 
+
+ 
+
+ 
+
+# In[187]:
+
+ 
+
+ 
+
+features_df["CLAIM_ID"]=features_df["CLAIM_ID"].astype(str)
+
+model_df112["CLAIM_ID"]=model_df112["CLAIM_ID"].astype(str)
+
+overall_train = pd.merge(features_df, model_df112, on="CLAIM_ID", how="inner").drop_duplicates()
+
+ 
+
+ 
+
+# In[188]:
+
+ 
+
+ 
+
+overall_train.shape
+
+ 
+
+ 
+
+# In[189]:
+
+ 
+
+ 
+
+# In[97]:
+
+ 
+
+ 
+
+overall_train1 = overall_train.copy()
+
+ 
+
+ 
+
+# In[98]:
+
+ 
+
+ 
+
+model_df1.columns
+
+ 
+
+ 
+
+# In[99]:
+
+ 
+
+ 
+
+drop_cols = ['Error_Type','QC_Date']
+
+ 
+
+ 
+
+# In[100]:
+
+ 
+
+ 
+
+overall_train.drop(columns=drop_cols, inplace=True, errors='ignore')
+
+ 
+
+ 
+
+# In[101]:
+
+ 
+
+ 
+
+cat_cols = [
+
+ 
+
+    'CLCL_CL_SUB_TYPE','CLST_MCTR_REAS','CLCL_ID_ADJ_FROM','PZAP_ID','CSCS_ID',
+
+ 
+
+    'MEME_SEX','NWPR_PFX','PDBC_PFX_NPPR','PDBC_PFX_SEDF','NWNW_ID','AGAG_ID',
+
+ 
+
+    'CLCL_REL_INFO_IND','CLCL_NTWK_IND','CLCL_INPUT_METH','CLCL_OUT_LAB_IND'
+
+ 
+
+]
+
+ 
+
+cont_cols = [
+
+ 
+
+    'Diff_CLCL_INPUT_DT_CLCL_RECD_DT','Diff_CLCL_INPUT_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_INPUT_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_RECD_DT_CLCL_ACPT_DTM',
+
+ 
+
+    'Diff_CLCL_RECD_DT_MEPE_PLAN_ENTRY_DT','Diff_CLCL_ACPT_DTM_MEPE_PLAN_ENTRY_DT',
+
+ 
+
+    'CLCL_TOT_CHG','CLCL_TOT_PAYABLE','CLCL_ME_AGE','RE','MIPS','adjusted','duration_days','duration_days_dos',
+
+    'BLANK_EOB_EXCD_ROWS','TOTAL_ROWS','BLANK_PREAUTH_ROWS','MOD2_NON_BLANK_COUNT',
+
+       'MOD3_NON_BLANK_COUNT', 'MOD4_NON_BLANK_COUNT',
+
+       'TOTAL_NON_BLANK_COUNT','embedding_0',
+
+'embedding_1',
+
+'embedding_2',
+
+'embedding_3',
+
+'embedding_4',
+
+'embedding_5',
+
+'embedding_6',
+
+'embedding_7',
+
+'embedding_8',
+
+'embedding_9',
+
+'embedding_10',
+
+ 
+
+'embedding_claim_0',
+
+'embedding_claim_1',
+
+'embedding_claim_2',
+
+'embedding_claim_3',
+
+'embedding_claim_4',
+
+'embedding_claim_5',
+
+'embedding_claim_6',
+
+'embedding_claim_7',
+
+'embedding_claim_8',
+
+'embedding_claim_9',
+
+'embedding_claim_10',
+
+ 
+
+'embedding_status_0',
+
+'embedding_status_1',
+
+'embedding_status_2',
+
+'embedding_status_3',
+
+'embedding_status_4',
+
+'embedding_status_5',
+
+'embedding_status_6',
+
+'embedding_status_7',
+
+'embedding_status_8',
+
+'embedding_status_9',
+
+'embedding_status_10',
+
+'embedding_agag_0',
+
+'embedding_agag_1',
+
+'embedding_agag_2',
+
+'embedding_agag_3',
+
+'embedding_agag_4',
+
+'embedding_agag_5',
+
+'embedding_agag_6',
+
+'embedding_agag_7',
+
+'embedding_agag_8',
+
+'embedding_agag_9',
+
+'embedding_agag_10'
+
+ 
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+   
+
+ 
+
+]
+
+ 
+
+ 
+
+# In[102]:
+
+ 
+
+ 
+
+id_cols = ['CLAIM_ID']
+
+ 
+
+ 
+
+# In[103]:
+
+ 
+
+ 
+
+overall_train.columns
+
+ 
+
+ 
+
+# In[190]:
+
+ 
+
+ 
+
+overall_train.shape
+
+ 
+
+ 
+
+# In[191]:
+
+ 
+
+ 
+
+# In[104]:
+
+ 
+
+ 
+
+y_train = overall_train['Error_Cat']
+
+ 
+
+X_train = overall_train.drop(columns=['Error_Cat'], errors='ignore')
+
+ 
+
+ 
+
+# In[192]:
+
+ 
+
+ 
+
+X_train.shape
+
+ 
+
+ 
+
+# In[193]:
+
+ 
+
+ 
+
+X_test=X_train.copy()
+
+ 
+
+ 
+
+# In[194]:
+
+ 
+
+ 
+
+for col in cat_cols:
+
+ 
+
+    fm = encoding_maps[col]['freq_map']
+
+ 
+
+    sm = encoding_maps[col]['sum_map']
+
+ 
+
+    rm = encoding_maps[col]['rate_map']
+
+ 
+
+ 
+
+ 
+
+    X_test[col + '_freq'] = X_test[col].map(fm)
+
+ 
+
+    X_test[col + '_sum']  = X_test[col].map(sm)
+
+ 
+
+    X_test[col + '_rate'] = X_test[col].map(rm)
+
+ 
+
+ 
+
+ 
+
+    X_test[col + '_freq'].fillna(0, inplace=True)
+
+ 
+
+    X_test[col + '_sum'].fillna(0, inplace=True)
+
+ 
+
+    X_test[col + '_rate'].fillna(global_mean, inplace=True)
+
+ 
+
+ 
+
+ 
+
+ 
+
+# In[195]:
+
+ 
+
+ 
+
+X_test_enc  = X_test.drop(columns=cat_cols + id_cols, errors='ignore')
+
+ 
+
+ 
+
+# In[196]:
+
+ 
+
+ 
+
+X_test_enc.shape
+
+ 
+
+ 
+
+# In[197]:
+
+ 
+
+ 
+
+# Make sure cont_cols are present if not
+
+ 
+
+for c in cont_cols:
+
+ 
+
+ 
+
+    if c not in X_test_enc.columns and c in X_test.columns:
+
+ 
+
+        X_test_enc[c] = X_test[c]
+
+ 
+
+ 
+
+# In[198]:
+
+ 
+
+ 
+
+y_test_proba = best_rf_model.predict_proba(X_test_enc)[:, 1]
+
+ 
+
+y_test_pred  = (y_test_proba >= best_thresh).astype(int)
+
+ 
+
+ 
+
+# In[199]:
+
+ 
+
+ 
+
+y_test_pred.shape
+
+ 
+
+ 
+
+# In[200]:
+
+ 
+
+ 
+
+overall_train1.shape
+
+ 
+
+ 
+
+# In[201]:
+
+ 
+
+ 
+
+overall_test1=overall_train1.copy()
+
+ 
+
+ 
+
+# In[202]:
+
+ 
+
+ 
+
+overall_test1['RF1_Score'] = y_test_proba
+
+ 
+
+overall_test1['RF1_Pred']  = y_test_pred
+
+ 
+
+ 
+
+# In[203]:
+
+ 
+
+ 
+
+y_test = overall_test1['Error_Cat'].values
+
+ 
+
+ 
+
+# In[204]:
+
+ 
+
+ 
+
+overall_test1['Error_Cat'] .sum()
+
+ 
+
+ 
+
+# In[205]:
+
+ 
+
+ 
+
+overall_test1.shape
+
+ 
+
+ 
+
+# In[206]:
+
+ 
+
+ 
+
+y_test.sum()
+
+ 
+
+ 
+
+# In[207]:
+
+ 
+
+ 
+
+auc_test  = roc_auc_score(y_test, y_test_proba)
+
+ 
+
+ 
+
+# In[208]:
+
+ 
+
+ 
+
+print("Test AUC:", auc_test)
+
+ 
+
+ 
+
+# In[209]:
+
+ 
+
+ 
+
+overall_train1.shape,overall_test1.shape
+
+ 
+
+ 
+
+# In[210]:
+
+ 
+
+ 
+
+overall_train2.columns
+
+ 
+
+ 
+
+# In[211]:
+
+ 
+
+ 
+
+overall_test1["Data"]="Test"
+
+ 
+
+ 
+
+# In[212]:
+
+ 
+
+ 
+
+overall_test2=overall_test1.copy()
+
+ 
+
+ 
+
+# In[213]:
+
+ 
+
+ 
+
+import pandas as pd
+
+ 
+
+import numpy as np
+
+ 
+
+import matplotlib.pyplot as plt
+
+ 
+
+from sklearn.metrics import roc_curve, auc
+
+ 
+
+ 
+
+ 
+
+# Assuming your DataFrame is already loaded and named overall_all1
+
+ 
+
+# Columns: CLAIM_ID, RF1_Score, Error_Cat, Data
+
+ 
+
+ 
+
+ 
+
+# Split Train and Test sets
+
+ 
+
+train_df = overall_train2
+
+ 
+
+test_df = overall_test2
+
+ 
+
+ 
+
+ 
+
+# --- Function to plot ROC curve ---
+
+ 
+
+def plot_roc_curve(df, label):
+
+ 
+
+    fpr, tpr, _ = roc_curve(df['Error_Cat'], df['RF1_Score'])
+
+ 
+
+    roc_auc = auc(fpr, tpr)
+
+ 
+
+    plt.plot(fpr, tpr, label=f'{label} (AUC = {roc_auc:.2f})')
+
+ 
+
+ 
+
+ 
+
+# Plotting ROC for Train and Test
+
+ 
+
+plt.figure(figsize=(8, 6))
+
+ 
+
+plot_roc_curve(train_df, 'Train')
+
+ 
+
+plot_roc_curve(test_df, 'Test')
+
+ 
+
+plt.plot([0, 1], [0, 1], 'k--', label='Random')
+
+ 
+
+plt.xlabel('False Positive Rate')
+
+ 
+
+plt.ylabel('True Positive Rate')
+
+ 
+
+plt.title('ROC Curve - Train vs Test')
+
+ 
+
+plt.legend()
+
+ 
+
+plt.grid(True)
+
+ 
+
+plt.tight_layout()
+
+ 
+
+plt.show()
+
+ 
+
+ 
+
+ 
+
+# --- Function for Decile-wise Error Analysis ---
+
+ 
+
+def decile_analysis(df, label=''):
+
+ 
+
+    df = df.copy()
+
+ 
+
+    df['Decile'] = pd.qcut(df['RF1_Score'], 10, labels=False, duplicates='drop') + 1
+
+ 
+
+    summary = df.groupby('Decile').agg(
+
+ 
+
+        Total_Records=('CLAIM_ID', 'count'),
+
+ 
+
+        Total_Errors=('Error_Cat', 'sum')
+
+ 
+
+    ).reset_index()
+
+ 
+
+    summary['Error_Occurrence_Rate'] = (summary['Total_Errors'] / summary['Total_Records']).round(4)
+
+ 
+
+    summary = summary.sort_values(by='Decile', ascending=False)
+
+ 
+
+    print(f"\nDecile-wise Analysis for {label} Set")
+
+ 
+
+    print(summary.to_string(index=False))
+
+ 
+
+    return summary
+
+ 
+
+ 
+
+ 
+
+# Run analysis
+
+ 
+
+train_decile = decile_analysis(train_df, label='Train')
+
+ 
+
+test_decile = decile_analysis(test_df, label='Test')
+
+ 
+
+ 
+
+# In[214]:
+
+ 
+
+ 
+
+filtered_df_oop.shape
+
+ 
+
+ 
+
+# In[215]:
+
+ 
+
+ 
+
+train_df.shape
+
+ 
+
+ 
+
+# In[216]:
+
+ 
+
+ 
+
+test_df.shape
+
+ 
+
+ 
+
+# In[217]:
+
+ 
+
+ 
+
+train_df.head(3)
+
+ 
+
+ 
+
+# In[218]:
+
+ 
+
+ 
+
+test_df.head(3)
+
+ 
+
+ 
+
+# In[219]:
+
+ 
+
+ 
+
+train_df.columns
+
+ 
+
+ 
+
+# In[220]:
+
+ 
+
+ 
+
+import pandas as pd
+
+ 
+
+ 
+
+ 
+
+# STEP 1: Create deciles in train data
+
+ 
+
+train_sorted = train_df.sort_values("RF1_Score", ascending=False).reset_index(drop=True)
+
+ 
+
+train_sorted["Decile"] = pd.qcut(train_sorted.index + 1, 10, labels=False) + 1
+
+ 
+
+ 
+
+ 
+
+# Get the **min RF1_Score per decile** from train (sorted ASCENDING by decile)
+
+ 
+
+train_decile_min_scores = train_sorted.groupby("Decile")["RF1_Score"].min().sort_index(ascending=True)
+
+ 
+
+ 
+
+ 
+
+# STEP 2: Assign deciles to test data using train thresholds (correct order)
+
+ 
+
+test_sorted = test_df.sort_values("RF1_Score", ascending=False).reset_index(drop=True)
+
+ 
+
+test_sorted["Decile"] = pd.NA
+
+ 
+
+ 
+
+ 
+
+# Assign each test record to the HIGHEST decile it qualifies for (start from Decile 1)
+
+ 
+
+for decile, min_score in train_decile_min_scores.items():
+
+ 
+
+    mask = test_sorted["Decile"].isna() & (test_sorted["RF1_Score"] >= min_score)
+
+ 
+
+    test_sorted.loc[mask, "Decile"] = decile
+
+ 
+
+ 
+
+ 
+
+# Remaining records go to Decile 10
+
+ 
+
+test_sorted["Decile"] = test_sorted["Decile"].fillna(10).astype(int)
+
+ 
+
+ 
+
+ 
+
+# STEP 3: Function to summarize deciles
+
+ 
+
+def decile_summary(df, name):
+
+ 
+
+    summary = df.groupby("Decile").agg(
+
+ 
+
+        Max_RF1_Score=("RF1_Score", "max"),
+
+ 
+
+        Min_RF1_Score=("RF1_Score", "min"),
+
+ 
+
+        Total_Rows=("RF1_Score", "count"),
+
+ 
+
+        Total_Errors=("Error_Cat", "sum")
+
+ 
+
+    ).sort_index().reset_index()
+
+ 
+
+ 
+
+ 
+
+    summary["%_Error"] = (summary["Total_Errors"] / summary["Total_Rows"]) * 100
+
+ 
+
+    summary["Cumulative_Errors"] = summary["Total_Errors"].cumsum()
+
+ 
+
+    summary["Cumulative_Total_Rows"] = summary["Total_Rows"].cumsum()
+
+ 
+
+    summary["Cumulative_%_Error"] = (
+
+ 
+
+        summary["Cumulative_Errors"] / summary["Cumulative_Total_Rows"]
+
+ 
+
+    ) * 100
+
+ 
+
+ 
+
+ 
+
+    print(f"\n=== {name} Decile Summary ===")
+
+ 
+
+    print(summary.to_string(index=False))
+
+ 
+
+    return summary
+
+ 
+
+ 
+
+ 
+
+# STEP 4: Generate and display summaries
+
+ 
+
+train_summary = decile_summary(train_sorted, "TRAIN")
+
+ 
+
+test_summary = decile_summary(test_sorted, "TEST")
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+
+ 
+
+ 
+
+# In[221]:
+
+ 
+
+ 
+
+import smtplib
+
+ 
+
+import datetime
+
+ 
+
+from email.mime.multipart import MIMEMultipart
+
+ 
+
+from email.mime.text import MIMEText
+
+ 
+
+class MailProps:
+
+ 
+
+    """Holds email server (SMTP) configuration."""
+
+ 
+
+    def __init__(self, host: str, port: int, from_user: str):
+
+ 
+
+        self.host = host
+
+ 
+
+        self.port = port
+
+ 
+
+        self.from_user = from_user
+
+ 
+
+class RecipientVO:
+
+ 
+
+    """Holds recipient addresses for email."""
+
+ 
+
+    def __init__(self, recipients_to: list, recipients_cc: list = None):
+
+ 
+
+        self.recipients_to = recipients_to
+
+ 
+
+        self.recipients_cc = recipients_cc or []
+
+ 
+
+class EmailService:
+
+ 
+
+    """Responsible for sending emails using SMTP."""
+
+ 
+
+    def __init__(self, mail_props: MailProps):
+
+ 
+
+        self.mail_props = mail_props
+
+ 
+
+ 
+
+ 
+
+    def send_email(self, subject: str, mail_body_content: str, recipient: RecipientVO):
+
+ 
+
+        try:
+
+ 
+
+            session = smtplib.SMTP(self.mail_props.host, self.mail_props.port)
+
+ 
+
+            message = MIMEMultipart()
+
+ 
+
+            message['From'] = self.mail_props.from_user
+
+ 
+
+            message['To'] = ', '.join(recipient.recipients_to)
+
+ 
+
+            if recipient.recipients_cc:
+
+ 
+
+                message['Cc'] = ', '.join(recipient.recipients_cc)
+
+ 
+
+            message['Subject'] = subject
+
+ 
+
+ 
+
+ 
+
+            message.attach(MIMEText(mail_body_content, 'plain'))
+
+ 
+
+            all_recipients = list(set(recipient.recipients_to + recipient.recipients_cc))
+
+ 
+
+            session.sendmail(self.mail_props.from_user, all_recipients, message.as_string())
+
+ 
+
+            session.quit()
+
+ 
+
+            print("Mail sent successfully!")
+
+ 
+
+        except Exception as e:
+
+ 
+
+            print(f"Error while sending email: {e}")
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+def send_smart_audit_report():
+
+ 
+
+    now = datetime.datetime.now()
+
+ 
+
+    current_date = now.strftime("%Y-%m-%d")
+
+ 
+
+ 
+
+ 
+
+    to_addresses = [
+
+ 
+
+        Philip.Vincent@cognizant.com
+
+ 
+
+    ]
+
+ 
+
+    cc_addresses = [
+
+ 
+
+        Philip.Vincent@cognizant.com
+
+ 
+
+    ]
+
+ 
+
+ 
+
+ 
+
+    subject = f"FW: Smart Audit Model Execution Report for {current_date} (HIL, MMAI, MAPD)"
+
+ 
+
+    body = f"The AUCfor test is :{auc_test}"
+
+ 
+
+   
+
+ 
+
+ 
+
+ 
+
+    mail_props = MailProps(
+
+ 
+
+        host="smtprelay.tmghealth.com",
+
+ 
+
+        port=25,
+
+ 
+
+        from_user=tmganalytics01@cognizant.com
+
+ 
+
+    )
+
+ 
+
+    recipient = RecipientVO(to_addresses, cc_addresses)
+
+ 
+
+    email_service = EmailService(mail_props)
+
+ 
+
+    email_service.send_email(subject, body, recipient)
+
+ 
+
+ 
+
+ 
+
+ 
+
+send_smart_audit_report()
+
+ 
+
+ 
+
+# In[222]:
+
+ 
+
+ 
+
+print("Completed_end")
+
+ 
+
+ 
+
+# In[223]:
+
+ 
+
+ 
+
+import pandas as pd
+
+ 
+
+from sklearn.metrics import precision_score, recall_score
+
+ 
+
+ 
+
+ 
+
+# Use the final test dataset
+
+ 
+
+df = overall_test1.copy()
+
+ 
+
+ 
+
+ 
+
+# Sort by prediction score
+
+ 
+
+df_sorted = df.sort_values(by='RF1_Score', ascending=False).reset_index(drop=True)
+
+ 
+
+ 
+
+ 
+
+# Compute top 2% cutoff
+
+ 
+
+top_2_percent_count = int(0.02 * len(df_sorted))
+
+ 
+
+ 
+
+ 
+
+# Extract top 2%
+
+ 
+
+top_2_df = df_sorted.head(top_2_percent_count)
+
+ 
+
+ 
+
+ 
+
+# Precision and Recall at top 2%
+
+ 
+
+precision_at_2 = precision_score(top_2_df['Error_Cat'], [1]*len(top_2_df))  # All predicted as 1
+
+ 
+
+recall_at_2 = top_2_df['Error_Cat'].sum() / df['Error_Cat'].sum()
+
+ 
+
+ 
+
+ 
+
+print(f"Top 2% (first {top_2_percent_count} rows):")
+
+ 
+
+print(f"→ Precision: {precision_at_2:.4f}")
+
+ 
+
+print(f"→ Recall:    {recall_at_2:.4f}")
+
+ 
+
+print(f"→ Errors Found: {top_2_df['Error_Cat'].sum()} out of {df['Error_Cat'].sum()}")
+
+ 
+
+
+ 
+
+ 
+
+# In[ ]:
+
+ 
+
+ 
+
+ 
+
+ 
